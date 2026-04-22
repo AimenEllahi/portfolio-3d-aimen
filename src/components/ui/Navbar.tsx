@@ -34,11 +34,11 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md transition-colors ${
+        className={`fixed top-10 left-1/2 w-[90%] -translate-x-1/2 rounded-lg z-50 bg-black/20 backdrop-blur-md transition-colors ${
           showBorder ? "border-b border-white/10" : "border-b border-transparent"
         }`}
       >
-        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
+        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-0">
           <button
             type="button"
             onClick={() => handleScrollTo("#hero")}

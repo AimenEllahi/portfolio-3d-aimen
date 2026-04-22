@@ -15,6 +15,14 @@ type Project = {
 
 const PROJECTS = [
   {
+    name: "DNDAI Platform",
+    tech: ["Next.js", "Node.js", "MongoDB"],
+    description: "AI-powered platform serving 10,000+ users",
+    tag: "Full Stack",
+    tagClass: "bg-emerald-400/20 text-emerald-300 border-emerald-300/30",
+    href: "https://dndai.app/",
+  },
+  {
     name: "Xiaomi Interactive Showcase",
     tech: ["Three.js", "Next.js", "GSAP"],
     description:
@@ -30,14 +38,6 @@ const PROJECTS = [
     tag: "Configurator",
     tagClass: "bg-purple-400/20 text-purple-300 border-purple-300/30",
     href: "https://landau-alure-232.vercel.app/Island",
-  },
-  {
-    name: "DNDAI Platform",
-    tech: ["Next.js", "Node.js", "MongoDB"],
-    description: "AI-powered platform serving 10,000+ users",
-    tag: "Full Stack",
-    tagClass: "bg-emerald-400/20 text-emerald-300 border-emerald-300/30",
-    href: "https://dndai.app/",
   },
 ] satisfies Project[];
 
