@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import ConditionalBackground from "@/components/ConditionalBackground";
+import CursorGlow from "@/components/ui/CursorGlow";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
 });
 
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-syne",
 });
 
 export const metadata: Metadata = {
-  title: "3D Portfolio | Creative Developer",
+  title: "Aimen Qaiser — 3D Frontend Engineer",
   description:
-    "Interactive 3D portfolio showcasing creative development, Three.js expertise, and modern web experiences.",
+    "Frontend Engineer specializing in immersive 3D web experiences, React Three Fiber, and interactive configurators.",
   keywords: [
     "3D developer",
     "Three.js",
@@ -43,18 +40,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html
+      lang="en"
+      className={`dark h-full overflow-x-hidden ${spaceGrotesk.variable} ${syne.variable}`}
+    >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0f] text-white min-h-screen overflow-x-hidden`}
+        className="h-full overflow-x-hidden antialiased bg-[#050508] text-white font-[var(--font-space-grotesk)]"
       >
-        {/* Conditional background - switcher on home, particles on other pages */}
-        <ConditionalBackground />
-
-        {/* Responsive header/navigation */}
-        <Header />
-
-        {/* Main content area */}
-        <main className="relative z-10">{children}</main>
+        <CursorGlow />
+        {children}
       </body>
     </html>
   );

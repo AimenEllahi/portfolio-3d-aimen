@@ -3,8 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #ededed;
+  --bg: #050508;
+  --surface: #0d0d14;
+  --cyan: #6ee7f7;
+  --purple: #a855f7;
+  --white: #f8fafc;
+  --gray: #94a3b8;
+  --font-heading: "Syne", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+
+  --background: var(--bg);
+  --foreground: var(--white);
 }
 
 * {
@@ -18,7 +27,16 @@ html {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body), var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), var(--font-syne), system-ui, -apple-system, sans-serif;
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -102,5 +120,32 @@ body {
 /* Three.js canvas reset */
 canvas {
   display: block;
-  touch-action: none;
+  touch-action: auto;
+}
+
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: #6ee7f7;
+  box-shadow: 0 0 22px rgba(110, 231, 247, 0.85);
+  pointer-events: none;
+  z-index: 140;
+  transform: translate3d(-100px, -100px, 0);
+  transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+}
+
+.cursor-glow--active {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+@media (pointer: coarse) {
+  .cursor-glow {
+    display: none;
+  }
 }
