@@ -34,7 +34,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-10 left-1/2 w-[90%] -translate-x-1/2 rounded-lg z-50 bg-black/20 backdrop-blur-md transition-colors ${
+        className={`fixed top-10 left-1/2 w-[90%] -translate-x-1/2 rounded-lg z-50 bg-black/20 backdrop-blur-sm transition-colors ${
           showBorder ? "border-b border-white/10" : "border-b border-transparent"
         }`}
       >

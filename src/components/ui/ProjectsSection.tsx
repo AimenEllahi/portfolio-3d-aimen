@@ -8,6 +8,7 @@ type Project = {
   name: string;
   tech: string[];
   description: string;
+  impact: string;
   tag: string;
   tagClass: string;
   href: string;
@@ -18,6 +19,7 @@ const PROJECTS = [
     name: "DNDAI Platform",
     tech: ["Next.js", "Node.js", "MongoDB"],
     description: "AI-powered platform serving 10,000+ users",
+    impact: "Scaled gameplay sessions and content generation for a growing active user base.",
     tag: "Full Stack",
     tagClass: "bg-emerald-400/20 text-emerald-300 border-emerald-300/30",
     href: "https://dndai.app/",
@@ -27,6 +29,7 @@ const PROJECTS = [
     tech: ["Three.js", "Next.js", "GSAP"],
     description:
       "Interactive 3D product showcase for Redmi 12 with real-time rendering",
+    impact: "Improved product storytelling with immersive interactions and smooth visual performance.",
     tag: "3D Web",
     tagClass: "bg-cyan-400/20 text-cyan-300 border-cyan-300/30",
     href: "https://o16u.vercel.app/",
@@ -35,6 +38,7 @@ const PROJECTS = [
     name: "Landau Boat Configurator",
     tech: ["Three.js", "Next.js", "Tailwind", "GSAP"],
     description: "Real-time 3D boat customization with realistic water rendering",
+    impact: "Reduced sales friction by letting users preview custom configurations instantly.",
     tag: "Configurator",
     tagClass: "bg-purple-400/20 text-purple-300 border-purple-300/30",
     href: "https://landau-alure-232.vercel.app/Island",
@@ -77,6 +81,9 @@ export default function ProjectsSection() {
     >
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10">
+          <p className="mb-3 text-xs uppercase tracking-[0.22em] text-cyan-300">
+            02 / Work
+          </p>
           <h2 className="font-[var(--font-syne)] text-4xl font-bold text-white">
             Selected Work
           </h2>
@@ -112,6 +119,7 @@ export default function ProjectsSection() {
               </div>
 
               <p className="mt-5 text-sm text-gray-400">{project.description}</p>
+              <p className="mt-3 text-sm text-gray-300">{project.impact}</p>
 
               <a
                 href={project.href}

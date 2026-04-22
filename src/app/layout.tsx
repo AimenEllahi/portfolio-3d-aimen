@@ -25,11 +25,11 @@ export const metadata: Metadata = {
     "Portfolio",
     "Web Developer",
   ],
-  authors: [{ name: "Creative Developer" }],
+  authors: [{ name: "Aimen Qaiser" }],
   openGraph: {
-    title: "3D Portfolio | Creative Developer",
+    title: "Aimen Qaiser — 3D Frontend Engineer",
     description:
-      "Interactive 3D portfolio showcasing creative development and modern web experiences.",
+      "Frontend Engineer specializing in immersive 3D web experiences, React Three Fiber, and interactive configurators.",
     type: "website",
   },
 };

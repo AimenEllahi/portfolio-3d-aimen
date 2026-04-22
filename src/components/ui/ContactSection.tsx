@@ -19,7 +19,7 @@ export default function ContactSection() {
             href="mailto:aimenqaiser2000@gmail.com"
             className="rounded-full border border-cyan-300 px-6 py-3 text-sm font-semibold text-cyan-300 transition-colors hover:bg-cyan-300/10"
           >
-            aimenqaiser2000@gmail.com
+            Email Me
           </a>
           <a
             href="https://linkedin.com/in/aimen-qaiser"
