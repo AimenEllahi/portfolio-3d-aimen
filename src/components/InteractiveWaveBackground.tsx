@@ -149,6 +149,7 @@ function FloatingParticles({ mousePos, clickPos }: { mousePos: THREE.Vector2; cl
     if (!particlesRef.current) return;
 
     const matrix = new THREE.Matrix4();
+    const scaleVector = new THREE.Vector3();
     for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * 20;
       const y = (Math.random() - 0.5) * 20;
@@ -156,7 +157,8 @@ function FloatingParticles({ mousePos, clickPos }: { mousePos: THREE.Vector2; cl
       const scale = 0.05 + Math.random() * 0.1;
       
       matrix.setPosition(x, y, z);
-      matrix.scale(scale, scale, scale);
+      scaleVector.set(scale, scale, scale);
+      matrix.scale(scaleVector);
       particlesRef.current.setMatrixAt(i, matrix);
     }
     particlesRef.current.instanceMatrix.needsUpdate = true;

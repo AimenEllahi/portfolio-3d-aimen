@@ -72,7 +72,7 @@ function CameraController({
 function SimpleModel() {
   const meshRef = useRef<THREE.Mesh>(null);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.01;
     }

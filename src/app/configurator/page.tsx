@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
 import Loader from "@/components/Loader";
-import { CarPart, CarColors } from "@/components/CarModel";
+import { CarPart } from "@/components/CarModel";
 import {
   useConfiguratorStore,
   ConfigurablePart,

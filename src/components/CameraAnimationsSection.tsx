@@ -9,28 +9,26 @@ import * as THREE from "three";
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
+const CAMERA_POSITIONS = [
+  {
+    name: "Front View",
+    position: [0, 0, 8] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+    scrollPercent: 0,
+  },
+  {
+    name: "Side View",
+    position: [8, 0, -5] as [number, number, number],
+    rotation: [0, 0, 0] as [number, number, number],
+    scrollPercent: 20,
+  },
+];
+
 export default function CameraAnimationsSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
   const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([0, 0, 8]);
   const [cameraRotation, setCameraRotation] = useState<[number, number, number]>([0, 0, 0]);
-
-  // Camera positions with scroll percentages
-  const cameraPositions = [
-    {
-      name: "Front View",
-      position: [0, 0, 8] as [number, number, number],
-      rotation: [0, 0, 0] as [number, number, number],
-      scrollPercent: 0, // 0% of section scroll
-    },
-    {
-      name: "Side View",
-      position: [8, 0, -5] as [number, number, number],
-      rotation: [0, 0, 0] as [number, number, number],
-      scrollPercent: 20, // 20% of section scroll
-    },
-    // Add more positions as needed
-  ];
 
   useEffect(() => {
     if (!sectionRef.current || !scrollContentRef.current) return;
@@ -50,12 +48,12 @@ export default function CameraAnimationsSection() {
 
         // Find the two camera positions to interpolate between
         let startIndex = 0;
-        let endIndex = cameraPositions.length - 1;
+        let endIndex = CAMERA_POSITIONS.length - 1;
 
-        for (let i = 0; i < cameraPositions.length - 1; i++) {
+        for (let i = 0; i < CAMERA_POSITIONS.length - 1; i++) {
           if (
-            progress >= cameraPositions[i].scrollPercent &&
-            progress <= cameraPositions[i + 1].scrollPercent
+            progress >= CAMERA_POSITIONS[i].scrollPercent &&
+            progress <= CAMERA_POSITIONS[i + 1].scrollPercent
           ) {
             startIndex = i;
             endIndex = i + 1;
@@ -63,8 +61,8 @@ export default function CameraAnimationsSection() {
           }
         }
 
-        const startPos = cameraPositions[startIndex];
-        const endPos = cameraPositions[endIndex];
+        const startPos = CAMERA_POSITIONS[startIndex];
+        const endPos = CAMERA_POSITIONS[endIndex];
 
         // Calculate interpolation factor (0-1) between the two positions
         const range =
@@ -121,12 +119,6 @@ export default function CameraAnimationsSection() {
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
-
-  // Get current view name for display
-  const getCurrentViewName = () => {
-    // This is approximate - you could track it more precisely if needed
-    return cameraPositions[0].name; // Will update based on scroll
-  };
 
   return (
     <section ref={sectionRef} className="relative z-20 py-24 px-6 border-t border-white/10">

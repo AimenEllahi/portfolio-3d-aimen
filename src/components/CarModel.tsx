@@ -186,7 +186,6 @@ const defaultColors: CarColors = {
 
 export function CarModel({
   colors = {},
-  selectedPart,
   onPartClick,
   onPartHover,
 }: CarModelProps) {
@@ -278,12 +277,6 @@ export function CarModel({
   const handlePointerOut = () => {
     document.body.style.cursor = "auto";
     onPartHover?.(null);
-  };
-
-  // Helper to determine if a part should be highlighted
-  const getPartOpacity = (part: CarPart) => {
-    if (!selectedPart) return 1;
-    return selectedPart === part ? 1 : 0.3;
   };
 
   return (
