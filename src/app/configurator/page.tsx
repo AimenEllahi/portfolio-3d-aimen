@@ -193,12 +193,12 @@ export default function ConfiguratorPage() {
   const currentPartConfig = partConfigs.find((p) => p.id === selectedPart);
 
   return (
-    <div ref={pageRef} className=" min-h-screen py-20">
+    <div ref={pageRef} className="min-h-screen py-20 bg-[#050508] text-white">
       {/* Page Header */}
       <div className="px-6 py-8 border-b border-white/10">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#6ee7f7] to-[#a855f7] bg-clip-text text-transparent">
               3D Car Configurator
             </span>
           </h1>
@@ -215,7 +215,7 @@ export default function ConfiguratorPage() {
           {/* 3D Viewer - Takes 2/3 of space on large screens */}
           <div
             ref={viewerRef}
-            className="lg:col-span-2 aspect-[4/3] lg:aspect-auto lg:h-[600px] rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-sm opacity-0 relative"
+            className="lg:col-span-2 aspect-[4/3] lg:aspect-auto lg:h-[600px] rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#0d0d14]/90 to-[#050508]/90 backdrop-blur-sm opacity-0 relative"
           >
             {isLoading && <Loader />}
             <CarConfiguratorScene
@@ -237,9 +237,9 @@ export default function ConfiguratorPage() {
 
             {/* Selected part indicator */}
             {selectedPart && (
-              <div className="absolute bottom-4 left-4 px-4 py-2 bg-cyan-500/20 backdrop-blur-sm rounded-lg border border-cyan-500/40">
+              <div className="absolute bottom-4 left-4 px-4 py-2 bg-[#6ee7f7]/15 backdrop-blur-sm rounded-lg border border-[#6ee7f7]/40">
                 <p className="text-sm text-white">
-                  <span className="text-cyan-400">Editing:</span>{" "}
+                  <span className="text-[#6ee7f7]">Editing:</span>{" "}
                   {currentPartConfig?.name}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function ConfiguratorPage() {
                     onClick={() => handlePartSelect(part.id)}
                     className={`p-3 rounded-xl border transition-all duration-300 text-left ${
                       selectedPart === part.id
-                        ? "border-cyan-500 bg-cyan-500/20 scale-[1.02]"
+                        ? "border-[#6ee7f7] bg-[#6ee7f7]/15 scale-[1.02]"
                         : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                     }`}
                   >
@@ -353,7 +353,7 @@ export default function ConfiguratorPage() {
             </ConfigPanel>
 
             {/* Configuration Summary */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 backdrop-blur-sm">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0d0d14]/95 to-[#050508]/95 border border-white/10 backdrop-blur-sm">
               <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
                 <span>📋</span> Configuration Summary
               </h3>
@@ -379,7 +379,7 @@ export default function ConfiguratorPage() {
               </div>
 
               <div className="space-y-3">
-                <button className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 hover:scale-[1.02]">
+                <button className="w-full py-4 bg-gradient-to-r from-[#6ee7f7] to-[#a855f7] text-[#050508] font-semibold rounded-xl hover:shadow-lg hover:shadow-[#6ee7f7]/25 transition-all duration-300 hover:scale-[1.02]">
                   Request Quote
                 </button>
                 <div className="grid grid-cols-2 gap-3">
@@ -389,7 +389,7 @@ export default function ConfiguratorPage() {
                   >
                     Reset
                   </button>
-                  <button className="py-3 border border-cyan-500/40 text-cyan-400 font-medium rounded-xl hover:bg-cyan-500/10 transition-all duration-300">
+                  <button className="py-3 border border-[#6ee7f7]/40 text-[#6ee7f7] font-medium rounded-xl hover:bg-[#6ee7f7]/10 transition-all duration-300">
                     Save
                   </button>
                 </div>
@@ -397,8 +397,8 @@ export default function ConfiguratorPage() {
             </div>
 
             {/* Info Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-              <p className="text-sm text-cyan-100">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-[#6ee7f7]/10 to-[#a855f7]/10 border border-[#6ee7f7]/20">
+              <p className="text-sm text-[#e2fbff]">
                 <span className="font-semibold">💡 Tip:</span> Click directly on
                 car parts in the 3D view to select them for customization!
               </p>
@@ -430,7 +430,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   children,
 }) => {
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden backdrop-blur-sm">
+    <div className="rounded-2xl bg-[#0d0d14]/90 border border-white/10 overflow-hidden backdrop-blur-sm">
       {/* Panel Header - Clickable on mobile */}
       <button
         onClick={onToggle}
