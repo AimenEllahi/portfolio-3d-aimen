@@ -27,42 +27,45 @@ export default function HeroText() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative z-10 flex min-h-screen items-center px-6 pt-20">
+    <div
+      ref={containerRef}
+      className="relative z-10 flex min-h-screen items-center px-4 sm:px-6 pt-24 sm:pt-20"
+    >
       <div className="mx-auto w-full max-w-6xl">
         <div className="max-w-3xl">
           <p
             data-hero-animate
-            className="mb-6 text-xs uppercase tracking-[0.24em] text-[#6ee7f7]"
+            className="mb-6 text-[11px] sm:text-xs uppercase tracking-[0.24em] text-[var(--cyan)]"
           >
             Frontend Engineer · Three.js · TypeScript
           </p>
 
           <h1
             data-hero-animate
-            className="font-[var(--font-syne)] text-5xl font-extrabold leading-[0.95] text-white md:text-7xl lg:text-[96px]"
+            className="font-[var(--font-syne)] text-4xl font-extrabold leading-[0.95] text-white sm:text-5xl md:text-7xl lg:text-[96px]"
           >
             <span className="block">Building</span>
-            <span className="block bg-gradient-to-r from-cyan-300 to-purple-500 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-[var(--cyan)] to-[var(--purple)] bg-clip-text text-transparent">
               Immersive
             </span>
             <span className="block">Experiences</span>
           </h1>
 
-          <p data-hero-animate className="mt-8 max-w-2xl text-base text-gray-400">
+          <p data-hero-animate className="mt-6 sm:mt-8 max-w-2xl text-sm sm:text-base text-[var(--gray)]">
             3+ years crafting 3D web applications, interactive configurators, and
             real-time rendering systems.
           </p>
 
-          <div data-hero-animate className="mt-8 flex flex-wrap items-center gap-4">
+          <div data-hero-animate className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
             <a
               href="#projects"
-              className="rounded-full bg-cyan-300 px-6 py-3 text-sm font-semibold text-[#050508] transition-colors hover:bg-cyan-200"
+              className="rounded-full bg-[var(--cyan)] px-5 sm:px-6 py-3 text-sm font-semibold text-[var(--bg)] transition-colors hover:brightness-95"
             >
               View Projects →
             </a>
             <a
               href="/configurator"
-              className="rounded-full border border-white px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#050508]"
+              className="rounded-full border border-white/80 px-5 sm:px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[var(--bg)]"
             >
               Try Configurator
             </a>

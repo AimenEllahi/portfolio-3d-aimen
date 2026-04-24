@@ -77,25 +77,25 @@ export default function ProjectsSection() {
     <section
       id="projects"
       ref={sectionRef}
-      className="relative z-10 flex min-h-screen items-center px-6 py-20"
+      className="relative z-10 flex min-h-screen items-center px-4 sm:px-6 py-16 sm:py-20"
     >
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10">
-          <p className="mb-3 text-xs uppercase tracking-[0.22em] text-cyan-300">
+          <p className="mb-3 text-xs uppercase tracking-[0.22em] text-[var(--cyan)]">
             02 / Work
           </p>
-          <h2 className="font-[var(--font-syne)] text-4xl font-bold text-white">
+          <h2 className="font-[var(--font-syne)] text-3xl sm:text-4xl font-bold text-white">
             Selected Work
           </h2>
-          <div className="mt-3 h-px w-20 bg-cyan-300" />
+          <div className="mt-3 h-px w-20 bg-[var(--cyan)]" />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
           {PROJECTS.map((project) => (
             <article
               key={project.name}
               data-project-card
-              className="group flex min-h-[340px] flex-col rounded-2xl border border-white/10 bg-[#0d0d14] p-6 transition duration-300 hover:-translate-y-1 hover:border-cyan-300"
+              className="group flex min-h-[320px] flex-col rounded-2xl border border-white/10 bg-[var(--surface)] p-5 sm:p-6 transition duration-300 hover:-translate-y-1 hover:border-[var(--cyan)]"
             >
               <div
                 className={`mb-5 inline-flex w-fit rounded-full border px-3 py-1 text-xs font-medium ${project.tagClass}`}
@@ -125,7 +125,7 @@ export default function ProjectsSection() {
                 href={project.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-auto inline-flex pt-7 text-sm font-medium text-cyan-300 transition-colors group-hover:text-cyan-200"
+                className="mt-auto inline-flex pt-6 text-sm font-medium text-[var(--cyan)] transition-colors group-hover:brightness-110"
               >
                 Live Demo →
               </a>

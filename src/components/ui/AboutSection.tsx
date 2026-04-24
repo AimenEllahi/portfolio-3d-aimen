@@ -82,12 +82,12 @@ export default function AboutSection() {
     <section
       id="about"
       ref={sectionRef}
-      className="relative z-10 flex min-h-screen items-center px-6 py-20"
+      className="relative z-10 flex min-h-screen items-center px-4 sm:px-6 py-16 sm:py-20"
     >
       <div className="mx-auto w-full max-w-6xl">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-5">
           <div data-about-left className="lg:col-span-3">
-            <h2 className="font-[var(--font-syne)] text-5xl font-bold text-white">
+            <h2 className="font-[var(--font-syne)] text-4xl sm:text-5xl font-bold text-white">
               About Me
             </h2>
             <p className="mt-6 max-w-3xl text-base leading-relaxed text-gray-300">
@@ -105,7 +105,7 @@ export default function AboutSection() {
           </div>
 
           <div data-about-right className="lg:col-span-2">
-            <div className="rounded-2xl border border-white/10 bg-[#0d0d14] p-6">
+            <div className="rounded-2xl border border-white/10 bg-[var(--surface)] p-5 sm:p-6">
               <h3 className="font-[var(--font-syne)] text-xl font-semibold text-white">
                 Skills
               </h3>
@@ -130,19 +130,19 @@ export default function AboutSection() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-[#0d0d14] p-6">
+            <div className="mt-6 rounded-2xl border border-white/10 bg-[var(--surface)] p-5 sm:p-6">
               <h3 className="font-[var(--font-syne)] text-xl font-semibold text-white">
                 Experience
               </h3>
               <ul className="mt-5 space-y-4">
                 {TIMELINE.map((item) => (
                   <li key={item.company} className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-cyan-300" />
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--cyan)]" />
                     <div>
                       <p className="text-sm font-medium text-white">{item.company}</p>
                       <p className="text-sm text-gray-400">{item.role}</p>
                     </div>
-                    <span className="ml-auto text-sm text-cyan-300">{item.year}</span>
+                    <span className="ml-auto text-sm text-[var(--cyan)]">{item.year}</span>
                   </li>
                 ))}
               </ul>
