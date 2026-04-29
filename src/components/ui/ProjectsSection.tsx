@@ -43,6 +43,15 @@ const PROJECTS = [
     tagClass: "bg-purple-400/20 text-purple-300 border-purple-300/30",
     href: "https://landau-alure-232.vercel.app/Island",
   },
+  {
+    name: "TaskBoard Pro Dashboard",
+    tech: ["Angular", "Tailwind CSS"],
+    description: "Simple task dashboard with filters, status tracking, and sprint overview.",
+    impact: "Improved day-to-day task visibility with a clean, responsive Angular UI.",
+    tag: "Frontend",
+    tagClass: "bg-cyan-400/20 text-cyan-300 border-cyan-300/30",
+    href: "https://angular-project-ashy.vercel.app/dashboard",
+  },
 ] satisfies Project[];
 
 export default function ProjectsSection() {
