@@ -2,32 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #050508;
-  --surface: #0d0d14;
-  --cyan: #6ee7f7;
-  --purple: #a855f7;
-  --white: #f8fafc;
-  --gray: #94a3b8;
-  --font-heading: "Syne", sans-serif;
-  --font-body: "Space Grotesk", sans-serif;
-
-  --background: var(--bg);
-  --foreground: var(--white);
-}
-
-* {
+/* CSS reset (extends Tailwind preflight) */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom cursor hides the system caret — only safe on mouse/desktop. */
+@media (pointer: fine) {
+  *,
+  *::before,
+  *::after {
+    cursor: none;
+  }
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
 html {
-  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+#root,
+#__next {
+  isolation: isolate;
+}
+
+/* CSS mask luminance fallback for stencil hero */
+.hero-stencil-overlay {
+  -webkit-mask-source-type: luminance;
+  mask-source-type: luminance;
+}
+
+:root {
+  /* Backgrounds */
+  --bg: #050508;
+  --surface: #0d0d14;
+  --surface-2: #161622;
+
+  /* Text */
+  --fg: #f0ede8;
+  --muted: #94919a;
+  --subtle: #5a5760;
+
+  /* Accent (UI — buttons, links, labels) */
+  --accent: #6ef0c8;
+  --accent-dim: #4dd4a8;
+  --accent-ghost: rgba(110, 240, 200, 0.1);
+
+  /* Supporting accents */
+  --violet: #8b5cf6; /* shader / 3D-facing only */
+  --amber: #f59e0b; /* tags / badges */
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(110, 240, 200, 0.25);
+
+  /* Tailwind semantic aliases */
+  --background: var(--bg);
+  --foreground: var(--fg);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-body), var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-neue), ui-sans-serif, system-ui, sans-serif;
 }
 
 h1,
@@ -36,7 +115,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-heading), var(--font-syne), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-monument), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -45,62 +124,61 @@ h6 {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--border);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.22);
 }
 
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+  scrollbar-color: rgba(255, 255, 255, 0.14) var(--border);
 }
 
-/* Canvas container styles */
 .canvas-container {
   position: absolute;
   inset: 0;
 }
 
-/* Gradient text utility */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .gradient-text {
-    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[var(--accent)] via-[var(--accent-dim)] to-[var(--violet)] bg-clip-text text-transparent;
   }
-  
+
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    @apply bg-white/[0.03] backdrop-blur-md border;
+    border-color: var(--border);
   }
-  
+
   .glass-dark {
-    @apply bg-black/40 backdrop-blur-md border border-white/10;
+    @apply bg-black/40 backdrop-blur-md border;
+    border-color: var(--border);
   }
 }
 
-/* Animation utilities */
 @layer utilities {
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-glow {
     animation: glow 2s ease-in-out infinite;
   }
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -109,15 +187,31 @@ h6 {
 }
 
 @keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(110, 240, 200, 0.25);
   }
   50% {
-    box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 40px rgba(110, 240, 200, 0.45);
   }
 }
 
-/* Three.js canvas reset */
+/* Display type: Syne via `next/font` → `--font-monument` in layout.tsx */
+
+@keyframes hero-scroll-line {
+  0%,
+  100% {
+    transform: scaleY(0);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.hero-scroll-line {
+  animation: hero-scroll-line 2.4s ease-in-out infinite;
+}
+
 canvas {
   display: block;
   touch-action: auto;
@@ -130,12 +224,17 @@ canvas {
   width: 12px;
   height: 12px;
   border-radius: 9999px;
-  background: #6ee7f7;
-  box-shadow: 0 0 22px rgba(110, 231, 247, 0.85);
+  background: var(--accent);
+  box-shadow:
+    0 0 22px rgba(110, 240, 200, 0.55),
+    0 0 12px rgba(110, 240, 200, 0.35);
   pointer-events: none;
   z-index: 140;
   transform: translate3d(-100px, -100px, 0);
-  transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+  transition:
+    width 0.2s ease,
+    height 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .cursor-glow--active {

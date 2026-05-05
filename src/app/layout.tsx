@@ -1,16 +1,22 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, Syne } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { DM_Sans, Syne } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
-import CursorGlow from "@/components/ui/CursorGlow";
+import "lenis/dist/lenis.css";
+import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 
-const spaceGrotesk = Space_Grotesk({
+const neue = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-neue",
+  display: "swap",
+  weight: ["400", "500", "700"],
 });
 
-const syne = Syne({
+const monument = Syne({
   subsets: ["latin"],
-  variable: "--font-syne",
+  variable: "--font-monument",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -34,6 +40,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,13 +52,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark h-full overflow-x-hidden ${spaceGrotesk.variable} ${syne.variable}`}
+      className={`dark min-h-[100dvh] overflow-x-hidden ${neue.variable} ${monument.variable}`}
     >
-      <body
-        className="h-full overflow-x-hidden antialiased bg-[#050508] text-white font-[var(--font-space-grotesk)]"
-      >
-        <CursorGlow />
-        {children}
+      <body className="min-h-[100dvh] overflow-x-hidden antialiased bg-[var(--bg)] text-[var(--fg)] font-neue">
+        <Script
+          id="scroll-restoration-top"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if('scrollRestoration'in history)history.scrollRestoration='manual';window.scrollTo(0,0);}catch(e){}})();`,
+          }}
+        />
+        <SmoothScrollProvider>
+          {children}
+        </SmoothScrollProvider>
       </body>
     </html>
   );

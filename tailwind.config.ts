@@ -12,6 +12,20 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        monument: [
+          "var(--font-monument)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        neue: [
+          "var(--font-neue)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+      },
     },
   },
   plugins: [],

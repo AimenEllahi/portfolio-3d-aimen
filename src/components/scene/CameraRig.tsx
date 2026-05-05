@@ -1,58 +1,61 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+/** Matches HeroSection scrub timing so zoom lines up with the name/M stencil zoom */
+const HERO_TRIGGER_SELECTOR = "#home";
+
 export default function CameraRig() {
-  const { camera, scene } = useThree();
+  const { camera } = useThree();
   const lookAtTarget = useMemo(() => new THREE.Vector3(0, 0, 0), []);
-  const progressRef = useRef(0);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
+    const easeZoom = gsap.parseEase("power2.inOut");
+
     const updateCamera = (progress: number) => {
-      const easedProgress = THREE.MathUtils.smoothstep(progress, 0, 1);
-      // Stronger forward range so movement is unmistakable.
+      const easedProgress = easeZoom(progress);
       camera.position.set(0, 0, 8 - easedProgress * 9.4);
       lookAtTarget.set(0, 0, -1.8 - easedProgress * 1.2);
       camera.lookAt(lookAtTarget);
-
-      const fadeT = easedProgress <= 0.75 ? 0 : (easedProgress - 0.65) / 0.25;
-      const targetOpacity = 1 - fadeT * 0.65;
-      scene.traverse((object) => {
-        const mesh = object as THREE.Mesh;
-        if (!mesh.isMesh || !mesh.material) return;
-        const materials = Array.isArray(mesh.material)
-          ? mesh.material
-          : [mesh.material];
-        materials.forEach((material) => {
-          material.transparent = true;
-          material.opacity = targetOpacity;
-        });
-      });
     };
 
-    const trigger = ScrollTrigger.create({
-      trigger: document.documentElement,
-      start: "top top",
-      end: "+=2800",
-      scrub: 1.2,
-      onUpdate: (self) => {
-        progressRef.current = self.progress;
-        updateCamera(self.progress);
-      },
-    });
+    let trigger: ScrollTrigger | null = null;
+    let raf = 0;
 
-    updateCamera(progressRef.current);
+    const attachWhenReady = () => {
+      const el = document.querySelector<HTMLElement>(HERO_TRIGGER_SELECTOR);
+      if (!el) {
+        raf = requestAnimationFrame(attachWhenReady);
+        return;
+      }
+
+      trigger = ScrollTrigger.create({
+        trigger: el,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1,
+        onUpdate: (self) => {
+          updateCamera(self.progress);
+        },
+      });
+
+      updateCamera(trigger.progress);
+      ScrollTrigger.refresh();
+    };
+
+    attachWhenReady();
 
     return () => {
-      trigger.kill();
+      cancelAnimationFrame(raf);
+      trigger?.kill();
     };
-  }, [camera, lookAtTarget, scene]);
+  }, [camera, lookAtTarget]);
 
   return null;
 }

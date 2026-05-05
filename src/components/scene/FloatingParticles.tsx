@@ -44,7 +44,7 @@ export default function FloatingParticles() {
     attr.needsUpdate = true;
 
     if (materialRef.current) {
-      materialRef.current.opacity = 0.42 + Math.sin(t * 22) * 0.05;
+      materialRef.current.opacity = 0.26 + Math.sin(t * 22) * 0.04;
       materialRef.current.size = 0.016 + Math.sin(t * 16) * 0.003;
     }
   });
@@ -61,10 +61,10 @@ export default function FloatingParticles() {
       </bufferGeometry>
       <pointsMaterial
         ref={materialRef}
-        color="#cfcfcf"
+        color="#8eb8ae"
         size={0.016}
         transparent
-        opacity={0.42}
+        opacity={0.26}
         depthWrite={false}
       />
     </points>

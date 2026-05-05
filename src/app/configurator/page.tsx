@@ -154,9 +154,9 @@ export default function ConfiguratorPage() {
     // Flash animation feedback
     gsap.fromTo(
       viewerRef.current,
-      { boxShadow: "0 0 0 0 rgba(6, 182, 212, 0)" },
+      { boxShadow: "0 0 0 0 rgba(110, 240, 200, 0)" },
       {
-        boxShadow: "0 0 30px 10px rgba(6, 182, 212, 0.3)",
+        boxShadow: "0 0 30px 10px rgba(110, 240, 200, 0.3)",
         duration: 0.3,
         yoyo: true,
         repeat: 1,
@@ -194,7 +194,7 @@ export default function ConfiguratorPage() {
   const currentPartConfig = partConfigs.find((p) => p.id === selectedPart);
 
   return (
-    <div ref={pageRef} className="min-h-screen py-20 bg-[var(--bg)] text-[var(--white)]">
+    <div ref={pageRef} className="min-h-screen py-20 bg-[var(--bg)] text-[var(--fg)]">
       <Navbar />
       {/* Page Header */}
       <div className="px-6 py-8 border-b border-white/10">
@@ -202,7 +202,7 @@ export default function ConfiguratorPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
             3D Car Configurator
           </h1>
-          <p className="text-[var(--gray)] text-lg">
+          <p className="text-[var(--muted)] text-lg">
             Click on car parts or select below to customize • Drag to rotate •
             Scroll to zoom
           </p>
@@ -229,7 +229,7 @@ export default function ConfiguratorPage() {
             {hoveredPart && (
               <div className="absolute top-4 left-4 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg border border-white/20">
                 <p className="text-sm text-white">
-                  <span className="text-[var(--cyan)]">Hover:</span>{" "}
+                  <span className="text-[var(--accent)]">Hover:</span>{" "}
                   {partConfigs.find((p) => p.id === hoveredPart)?.name}
                 </p>
               </div>
@@ -237,9 +237,9 @@ export default function ConfiguratorPage() {
 
             {/* Selected part indicator */}
             {selectedPart && (
-              <div className="absolute bottom-4 left-4 px-4 py-2 bg-[var(--cyan)]/15 backdrop-blur-sm rounded-lg border border-[var(--cyan)]/40">
+              <div className="absolute bottom-4 left-4 px-4 py-2 bg-[var(--accent)]/15 backdrop-blur-sm rounded-lg border border-[var(--accent)]/40">
                 <p className="text-sm text-white">
-                  <span className="text-[var(--cyan)]">Editing:</span>{" "}
+                  <span className="text-[var(--accent)]">Editing:</span>{" "}
                   {currentPartConfig?.name}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function ConfiguratorPage() {
                     onClick={() => handlePartSelect(part.id)}
                     className={`p-3 rounded-xl border transition-all duration-300 text-left ${
                       selectedPart === part.id
-                        ? "border-[var(--cyan)] bg-[var(--cyan)]/15 scale-[1.02]"
+                        ? "border-[var(--accent)] bg-[var(--accent)]/15 scale-[1.02]"
                         : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                     }`}
                   >
@@ -297,7 +297,7 @@ export default function ConfiguratorPage() {
             >
               {selectedPart ? (
                 <>
-                  <p className="text-sm text-[var(--gray)] mb-3">
+                  <p className="text-sm text-[var(--muted)] mb-3">
                     {currentPartConfig?.description}
                   </p>
                   <div className="color-grid grid grid-cols-4 gap-3">
@@ -336,7 +336,7 @@ export default function ConfiguratorPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-4 text-sm text-[var(--gray)]">
+                  <p className="mt-4 text-sm text-[var(--muted)]">
                     Selected:{" "}
                     <span className="text-white font-medium">
                       {colorOptions.find(
@@ -346,7 +346,7 @@ export default function ConfiguratorPage() {
                   </p>
                 </>
               ) : (
-                <p className="text-[var(--gray)] text-sm">
+                <p className="text-[var(--muted)] text-sm">
                   Select a part above to change its color
                 </p>
               )}
@@ -360,7 +360,7 @@ export default function ConfiguratorPage() {
               <div className="space-y-3 text-sm mb-6">
                 {partConfigs.map((part) => (
                   <div key={part.id} className="flex items-center justify-between">
-                    <span className="text-[var(--gray)] flex items-center gap-2">
+                    <span className="text-[var(--muted)] flex items-center gap-2">
                       <span>{part.icon}</span>
                       {part.name}
                     </span>
@@ -379,7 +379,7 @@ export default function ConfiguratorPage() {
               </div>
 
               <div className="space-y-3">
-                <button className="w-full py-4 bg-gradient-to-r from-[var(--cyan)] to-[var(--purple)] text-[var(--bg)] font-semibold rounded-xl hover:shadow-lg hover:shadow-[var(--cyan)]/25 transition-all duration-300 hover:scale-[1.02]">
+                <button className="w-full py-4 bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] text-[var(--bg)] font-semibold rounded-xl hover:shadow-lg hover:shadow-[var(--accent)]/25 transition-all duration-300 hover:scale-[1.02]">
                   Request Quote
                 </button>
                 <div className="grid grid-cols-2 gap-3">
@@ -389,7 +389,7 @@ export default function ConfiguratorPage() {
                   >
                     Reset
                   </button>
-                  <button className="py-3 border border-[var(--cyan)]/40 text-[var(--cyan)] font-medium rounded-xl hover:bg-[var(--cyan)]/10 transition-all duration-300">
+                  <button className="py-3 border border-[var(--accent)]/40 text-[var(--accent)] font-medium rounded-xl hover:bg-[var(--accent)]/10 transition-all duration-300">
                     Save
                   </button>
                 </div>
@@ -397,7 +397,7 @@ export default function ConfiguratorPage() {
             </div>
 
             {/* Info Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-[var(--cyan)]/10 to-[var(--purple)]/10 border border-[var(--cyan)]/20">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-[var(--accent)]/10 to-[var(--violet)]/10 border border-[var(--accent)]/20">
               <p className="text-sm text-[#e2fbff]">
                 <span className="font-semibold">💡 Tip:</span> Click directly on
                 car parts in the 3D view to select them for customization!
