@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import MagneticButton from "@/components/MagneticButton";
 
 const SKILLS = [
   {
@@ -29,12 +30,66 @@ const TIMELINE = [
     company: "Think3DDD",
     role: "3D Software Engineering Intern",
     year: "2026",
+    desc:
+      "Medical 3D visualisation using Three.js and WebGL for surgical planning and diagnostic tools.",
   },
-  { company: "SAP", role: "JavaScript Developer", year: "2025" },
+  {
+    company: "SAP",
+    role: "JavaScript Developer",
+    year: "2025",
+    desc:
+      "Built internal tooling and UI components for enterprise-scale products used by global teams.",
+  },
   {
     company: "DNDAI",
     role: "Lead Frontend Engineer",
     year: "2024",
+    desc:
+      "Architected and shipped the entire frontend serving 10,000+ active users worldwide.",
+  },
+];
+
+const STATS = [
+  {
+    number: "3",
+    suffix: "+",
+    label: "Years experience",
+    desc: "Building production 3D web applications",
+  },
+  {
+    number: "10",
+    suffix: "k",
+    label: "Users served",
+    desc: "At DNDAI as Lead Frontend Engineer",
+  },
+  {
+    number: "4",
+    suffix: "",
+    label: "Live projects",
+    desc: "Shipped and currently in production",
+  },
+];
+
+const VALUES = [
+  {
+    icon: "◈",
+    title: "Performance first",
+    text: "Every frame counts. Optimised for 60fps before anything else.",
+  },
+  {
+    icon: "⟡",
+    title: "Spatial thinking",
+    text: "I design systems in 3D space, not just 2D interfaces.",
+  },
+  {
+    icon: "◻",
+    title: "Clean architecture",
+    text: "Code that the next person can read and extend without friction.",
+  },
+  {
+    icon: "◎",
+    title: "Ship fast",
+    text: "From prototype to production without losing craft.",
   },
 ];
 
@@ -42,6 +97,7 @@ const PROFILE_SRC = "/profile.jpg";
 
 const VIEWPORT = { once: true, margin: "-12% 0px" as const };
 const EASE = [0.16, 1, 0.3, 1] as const;
+const SECTION_VIEWPORT = { once: true, margin: "-10% 0px" as const };
 
 const staggerGrid = {
   hidden: {},
@@ -99,6 +155,17 @@ function AboutProfilePhoto() {
   );
 }
 
+function SectionLabel({ number, text }: { number: string; text: string }) {
+  return (
+    <div className="mb-8 flex items-center gap-3">
+      <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--subtle)]">
+        {number} · {text}
+      </span>
+      <span className="h-[0.5px] flex-1 bg-white/[0.07]" />
+    </div>
+  );
+}
+
 function HoverCard({
   accentClass,
   header,
@@ -110,8 +177,8 @@ function HoverCard({
 }) {
   return (
     <motion.div
-      className="group/about-card relative isolate overflow-hidden rounded-2xl border border-white/10 bg-[var(--surface)] p-5 sm:p-6 transition-colors duration-300 hover:border-white/[0.14]"
-      whileHover={{ y: -4 }}
+      className="group/about-card relative isolate overflow-hidden rounded-[14px] border border-white/[0.07] bg-[var(--surface)] px-6 py-7 transition-colors duration-300 hover:border-[rgba(110,240,200,0.15)]"
+      whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 380, damping: 28 }}
     >
       <div
@@ -123,124 +190,341 @@ function HoverCard({
   );
 }
 
-export default function AboutSection() {
+function SectionWrap({
+  children,
+  last = false,
+}: {
+  children: ReactNode;
+  last?: boolean;
+}) {
   return (
     <section
-      id="about"
-      className="relative z-10 flex min-h-screen items-center px-4 py-16 sm:px-6 sm:py-20"
+      className={`relative z-10 px-5 py-12 sm:px-8 sm:py-[60px] lg:px-12 lg:py-20 ${last ? "" : "border-b border-white/[0.05]"}`}
     >
-      <motion.div
-        className="relative mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-5"
-        variants={staggerGrid}
-        initial="hidden"
-        whileInView="visible"
-        viewport={VIEWPORT}
-      >
-        <motion.div variants={staggerLeft} className="lg:col-span-3">
-          <motion.h2
-            variants={fadeUpItem}
-            className="font-monument text-4xl font-bold text-white sm:text-5xl"
-          >
-            About Me
-          </motion.h2>
+      <div className="mx-auto w-full max-w-6xl">{children}</div>
+    </section>
+  );
+}
 
+export default function AboutSection() {
+  const [quoteImageError, setQuoteImageError] = useState(false);
+
+  return (
+    <div id="about">
+      <SectionWrap>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={SECTION_VIEWPORT}
+          variants={staggerLeft}
+          className="grid grid-cols-1 items-center gap-10 sm:grid-cols-2 sm:gap-8 lg:gap-12"
+        >
           <motion.div
             variants={fadeUpItem}
-            className="mt-6 flex flex-col gap-6 sm:flex-row sm:gap-8"
+            className="order-1 flex justify-center sm:order-2 sm:justify-end sm:self-start"
           >
-            <AboutProfilePhoto />
-            <div className="min-w-0 flex-1 space-y-5">
-              <p className="max-w-3xl text-base leading-relaxed text-gray-300">
-                Frontend Engineer with 3+ years building high-performance 3D web
-                applications. Currently pursuing MSc Media Informatics at Saarland
-                University and interning at Think3DDD in Berlin doing medical 3D
-                visualization. Previously at SAP and led frontend at DNDAI serving
-                10,000+ users.
-              </p>
-              <p className="max-w-3xl text-base leading-relaxed text-gray-400">
-                I enjoy turning complex spatial systems into experiences that still
-                feel intuitive and fast. For me, 3D web is where technical graphics
-                engineering and thoughtful UX design create the most meaningful work.
-              </p>
+            <div className="mb-8 sm:mb-0 sm:max-w-[180px] lg:max-w-[220px]">
+              <AboutProfilePhoto />
             </div>
           </motion.div>
-        </motion.div>
 
+          <div className="order-2 sm:order-1">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={SECTION_VIEWPORT}
+              transition={{ duration: 0.65, ease: EASE, delay: 0.1 }}
+              className="text-[10px] uppercase tracking-[0.18em] text-[var(--accent)]"
+            >
+              Frontend Engineer · Berlin
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={SECTION_VIEWPORT}
+              transition={{ duration: 0.75, ease: EASE, delay: 0.2 }}
+              className="font-monument mt-4 text-[clamp(1.8rem,6vw,2.4rem)] leading-[1.05] text-[var(--fg)] sm:text-[clamp(2.2rem,5vw,3.4rem)]"
+            >
+              Building the web in <span className="text-[var(--accent)]">3D</span>
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={SECTION_VIEWPORT}
+              transition={{ duration: 0.75, ease: EASE, delay: 0.3 }}
+              className="mt-4 max-w-[480px] text-base leading-[1.7] text-[var(--muted)]"
+            >
+              Frontend Engineer with 3+ years building high-performance 3D web
+              applications. Currently pursuing MSc Media Informatics at Saarland
+              University and interning at Think3DDD in Berlin doing medical 3D
+              visualisation.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={SECTION_VIEWPORT}
+              transition={{ duration: 0.6, ease: EASE, delay: 0.4 }}
+              className="mt-7 flex flex-wrap gap-3"
+            >
+              <MagneticButton strength={0.25}>
+                <a
+                  href="/cv.pdf"
+                  download
+                  className="inline-flex rounded-full bg-[var(--accent)] px-7 py-[11px] text-[13px] font-medium text-[#030d09]"
+                >
+                  Download CV
+                </a>
+              </MagneticButton>
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .querySelector("#contact")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="rounded-full border border-white/[0.12] px-7 py-[10px] text-[13px] text-[var(--muted)]"
+              >
+                Get in touch
+              </button>
+            </motion.div>
+          </div>
+        </motion.div>
+      </SectionWrap>
+
+      <SectionWrap>
         <motion.div
-          variants={fadeUpItem}
-          className="flex flex-col gap-6 lg:col-span-2"
+          initial="hidden"
+          whileInView="visible"
+          viewport={SECTION_VIEWPORT}
+          variants={staggerGrid}
         >
-          <HoverCard
-            header={
-              <h3 className="font-monument text-xl font-semibold text-white">
-                Skills
-              </h3>
-            }
+          <SectionLabel number="02" text="By the numbers" />
+          <motion.div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {STATS.map((stat) => (
+              <motion.div
+                key={stat.label}
+                variants={{
+                  hidden: { opacity: 0, y: 32, scale: 0.97 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { duration: 0.65, ease: EASE },
+                  },
+                }}
+              >
+                <HoverCard
+                  header={
+                    <div>
+                      <p className="font-monument text-[clamp(2rem,8vw,2.6rem)] leading-none text-[var(--fg)] sm:text-[clamp(2.4rem,5vw,3rem)]">
+                        {stat.number}
+                        <span className="text-[var(--accent)]">{stat.suffix}</span>
+                      </p>
+                      <p className="mt-[10px] text-[10px] uppercase tracking-[0.1em] text-[var(--subtle)]">
+                        {stat.label}
+                      </p>
+                    </div>
+                  }
+                >
+                  <p className="mt-[6px] text-[13px] leading-[1.5] text-[var(--muted)]">
+                    {stat.desc}
+                  </p>
+                </HoverCard>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      </SectionWrap>
+
+      <SectionWrap>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={SECTION_VIEWPORT}
+          variants={staggerLeft}
+          className="grid grid-cols-1 gap-10 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16"
+        >
+          <div>
+            <SectionLabel number="03" text="Experience timeline" />
+            <h3 className="font-monument text-[clamp(1.8rem,3.5vw,2.4rem)] text-[var(--fg)]">
+              Where I&apos;ve worked
+            </h3>
+            <p className="mt-3 max-w-[300px] text-[14px] leading-[1.7] text-[var(--muted)]">
+              From enterprise SaaS to AI startups - each role shaped how I
+              think about performance, scale, and craft.
+            </p>
+          </div>
+
+          <motion.ul
+            initial="hidden"
+            whileInView="visible"
+            viewport={SECTION_VIEWPORT}
+            variants={{
+              hidden: {},
+              visible: {
+                transition: { staggerChildren: 0.15 },
+              },
+            }}
           >
-            <div className="mt-5 space-y-5">
+            {TIMELINE.map((item, idx) => (
+              <motion.li
+                key={item.company}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={SECTION_VIEWPORT}
+                transition={{ duration: 0.6, ease: EASE, delay: idx * 0.03 }}
+                className={`grid grid-cols-[72px_1fr] gap-6 py-6 ${idx === TIMELINE.length - 1 ? "" : "border-b border-white/[0.05]"}`}
+              >
+                <div className="pt-1 text-right text-[12px] tracking-[0.08em] text-[var(--accent)]">
+                  {item.year}
+                </div>
+                <motion.div
+                  whileHover={{ x: 6 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 28 }}
+                  className="flex items-start gap-3.5 rounded-lg px-2 py-1.5 hover:bg-white/[0.02]"
+                >
+                  <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_10px_-2px_var(--accent)]" />
+                  <div>
+                    <p className="text-[15px] font-medium text-[var(--fg)]">
+                      {item.role}
+                    </p>
+                    <p className="mt-[3px] text-[13px] text-[var(--muted)]">
+                      {item.company} · {item.year === "2026" ? "Berlin" : "Remote"}
+                    </p>
+                    <p className="mt-[6px] text-[13px] leading-[1.6] text-[var(--subtle)]">
+                      {item.desc}
+                    </p>
+                  </div>
+                </motion.div>
+              </motion.li>
+            ))}
+          </motion.ul>
+        </motion.div>
+      </SectionWrap>
+
+      <SectionWrap>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={SECTION_VIEWPORT}
+          variants={staggerGrid}
+          className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-10 lg:gap-16"
+        >
+          <div>
+            <SectionLabel number="04" text="Skills & values" />
+            <div className="space-y-7">
               {SKILLS.map((group) => (
                 <div key={group.label}>
-                  <p className="mb-2 text-xs uppercase tracking-[0.14em] text-gray-400">
+                  <p className="mb-[10px] text-[10px] uppercase tracking-[0.14em] text-[var(--subtle)]">
                     {group.label}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <motion.div
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: { staggerChildren: 0.04 },
+                      },
+                    }}
+                    className="flex flex-wrap gap-2"
+                  >
                     {group.items.map((item) => (
                       <motion.span
                         key={item}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 480,
-                          damping: 22,
+                        variants={{
+                          hidden: { opacity: 0, scale: 0.9 },
+                          visible: { opacity: 1, scale: 1 },
                         }}
-                        className={`rounded-full border px-2.5 py-1 text-xs ${group.className}`}
+                        transition={{ duration: 0.35, ease: EASE }}
+                        className={`rounded-full border px-[14px] py-[5px] text-[12px] ${group.className}`}
                       >
                         {item}
                       </motion.span>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               ))}
             </div>
-          </HoverCard>
+          </div>
 
-          <HoverCard
-            accentClass="bg-gradient-to-r from-[var(--accent)] to-amber-500"
-            header={
-              <h3 className="font-monument text-xl font-semibold text-white">
-                Experience
-              </h3>
-            }
-          >
-            <ul className="mt-5 space-y-3">
-              {TIMELINE.map((item) => (
-                <motion.li
-                  key={item.company}
-                  whileHover={{
-                    x: 5,
-                    transition: {
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 26,
-                    },
-                  }}
-                  className="flex cursor-default gap-3 rounded-xl border border-transparent px-2 py-1.5 transition-colors hover:border-white/[0.06] hover:bg-white/[0.025]"
+          <div>
+            <div className="mt-10 sm:mt-[42px] grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {VALUES.map((value) => (
+                <motion.div
+                  key={value.title}
+                  variants={fadeUpItem}
+                  className="rounded-xl border border-white/[0.06] bg-[var(--surface)] p-5"
                 >
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_12px_-2px_var(--accent)]" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{item.company}</p>
-                    <p className="text-sm text-gray-400">{item.role}</p>
+                  <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(110,240,200,0.12)] bg-[rgba(110,240,200,0.06)] text-[14px] text-[var(--accent)]">
+                    {value.icon}
                   </div>
-                  <span className="ml-auto shrink-0 text-sm text-[var(--accent)] tabular-nums">
-                    {item.year}
-                  </span>
-                </motion.li>
+                  <p className="text-[13px] font-medium text-[var(--fg)]">
+                    {value.title}
+                  </p>
+                  <p className="mt-1 text-[12px] leading-[1.6] text-[var(--subtle)]">
+                    {value.text}
+                  </p>
+                </motion.div>
               ))}
-            </ul>
-          </HoverCard>
+            </div>
+          </div>
         </motion.div>
-      </motion.div>
-    </section>
+      </SectionWrap>
+
+      <SectionWrap last>
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={SECTION_VIEWPORT}
+          transition={{ duration: 1, ease: EASE }}
+          className="mx-auto max-w-[720px]"
+        >
+          <SectionLabel number="05" text="Philosophy" />
+          <span
+            aria-hidden
+            className="mb-5 block font-serif text-[72px] leading-[0.6] text-[var(--accent)] opacity-30"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            &quot;
+          </span>
+          <p className="text-[clamp(1.2rem,2.5vw,1.5rem)] leading-[1.6] text-[var(--fg)]">
+            3D web is where technical graphics engineering and thoughtful UX
+            design create the most meaningful work. I build things that make
+            people stop and look twice.
+          </p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={VIEWPORT}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
+            className="mt-8 flex items-center gap-3"
+          >
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[var(--surface)]">
+              {quoteImageError ? (
+                <span className="text-[11px] font-medium text-[var(--fg)]">AQ</span>
+              ) : (
+                <Image
+                  src={PROFILE_SRC}
+                  alt="Aimen Qaiser"
+                  width={36}
+                  height={36}
+                  onError={() => setQuoteImageError(true)}
+                  className="h-9 w-9 object-cover"
+                />
+              )}
+            </div>
+            <div>
+              <p className="text-[13px] font-medium text-[var(--fg)]">
+                Aimen Qaiser
+              </p>
+              <p className="text-[12px] text-[var(--subtle)]">
+                Frontend Engineer · MSc Media Informatics
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      </SectionWrap>
+    </div>
   );
 }

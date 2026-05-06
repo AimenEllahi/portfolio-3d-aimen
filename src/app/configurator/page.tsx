@@ -11,19 +11,11 @@ import {
   ConfigurablePart,
 } from "@/store/configuratorStore";
 
-// ============================================
-// TYPE DEFINITIONS
-// ============================================
-
 interface ColorOption {
   id: string;
   name: string;
   value: string;
 }
-
-// ============================================
-// CONFIGURATION DATA
-// ============================================
 
 const colorOptions: ColorOption[] = [
   { id: "racing-red", name: "Racing Red", value: "#dc2626" },
@@ -86,10 +78,6 @@ const partConfigs: PartConfigItem[] = [
   },
 ];
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
-
 export default function ConfiguratorPage() {
   const {
     partColors,
@@ -103,47 +91,68 @@ export default function ConfiguratorPage() {
     resetColors,
   } = useConfiguratorStore();
 
-  // Loading state
   const [isLoading, setIsLoading] = useState(true);
 
-  // Refs for GSAP animations
   const pageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
 
-  // GSAP entrance animations
   useEffect(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
 
+    if (isMobile) {
+      gsap.fromTo(
+        viewerRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.6, ease: "power2.out" },
+      );
+      gsap.fromTo(
+        mobilePanelRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          delay: 0.2,
+          ease: "power2.out",
+        },
+      );
+      return;
+    }
+
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
     tl.fromTo(
       viewerRef.current,
       { opacity: 0, scale: 0.95 },
-      { opacity: 1, scale: 1, duration: 0.8 }
+      { opacity: 1, scale: 1, duration: 0.8 },
     ).fromTo(
       panelRef.current,
       { opacity: 0, x: 50 },
       { opacity: 1, x: 0, duration: 0.6 },
-      "-=0.4"
+      "-=0.4",
+    );
+    gsap.fromTo(
+      mobilePanelRef.current,
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 0.6 },
     );
   }, []);
 
-  // Simulate model loading (you can replace this with actual loading detection)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 second delay to show loader
-
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Handler functions
   const handlePartSelect = (part: ConfigurablePart) => {
     setSelectedPart(part);
-    // Animate color selection when part changes
+    setActivePanel("colors");
     gsap.fromTo(
       ".color-grid",
       { opacity: 0.5, y: 10 },
-      { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
+      { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
     );
   };
 
@@ -151,7 +160,6 @@ export default function ConfiguratorPage() {
     if (!selectedPart) return;
     setPartColor(selectedPart, color);
 
-    // Flash animation feedback
     gsap.fromTo(
       viewerRef.current,
       { boxShadow: "0 0 0 0 rgba(110, 240, 200, 0)" },
@@ -160,13 +168,19 @@ export default function ConfiguratorPage() {
         duration: 0.3,
         yoyo: true,
         repeat: 1,
-      }
+      },
     );
   };
 
   const handlePartClick = (part: CarPart) => {
-    // Only set as selected if it's a configurable part
-    const configurableParts: ConfigurablePart[] = ["body", "accents", "wheels", "interior", "windows", "chrome"];
+    const configurableParts: ConfigurablePart[] = [
+      "body",
+      "accents",
+      "wheels",
+      "interior",
+      "windows",
+      "chrome",
+    ];
     if (configurableParts.includes(part as ConfigurablePart)) {
       setSelectedPart(part as ConfigurablePart);
       setActivePanel("colors");
@@ -186,36 +200,44 @@ export default function ConfiguratorPage() {
     gsap.fromTo(
       viewerRef.current,
       { scale: 1 },
-      { scale: 1.02, duration: 0.2, yoyo: true, repeat: 1 }
+      { scale: 1.02, duration: 0.2, yoyo: true, repeat: 1 },
     );
   };
 
-  // Get current part config
   const currentPartConfig = partConfigs.find((p) => p.id === selectedPart);
 
   return (
-    <div ref={pageRef} className="min-h-screen py-20 bg-[var(--bg)] text-[var(--fg)]">
+    <div
+      ref={pageRef}
+      className="min-h-dvh bg-[var(--bg)] text-[var(--fg)] lg:min-h-screen lg:py-20"
+    >
       <Navbar />
-      {/* Page Header */}
-      <div className="px-6 py-8 border-b border-white/10">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
+
+      {/* Header */}
+      <div className="border-b border-white/[0.06] px-4 pb-5 pt-24 sm:px-6 sm:pb-6 sm:pt-28 lg:border-white/10 lg:px-6 lg:py-8 lg:pt-8">
+        <div className="lg:mx-auto lg:max-w-7xl">
+          <h1 className="mb-1 text-xl font-bold text-white sm:text-2xl lg:mb-2 lg:text-3xl xl:text-4xl">
             3D Car Configurator
           </h1>
-          <p className="text-[var(--muted)] text-lg">
-            Click on car parts or select below to customize • Drag to rotate •
-            Scroll to zoom
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--muted)] sm:text-xs sm:tracking-[0.14em] lg:text-lg lg:normal-case lg:tracking-normal">
+            Click parts to customize
+            <span className="hidden sm:inline">
+              {" "}
+              • Drag to rotate • Scroll to zoom
+            </span>
           </p>
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* 3D Viewer - Takes 2/3 of space on large screens */}
+      {/* Main grid wrapper. Desktop layout fully preserved at lg+. */}
+      <div className="lg:mx-auto lg:max-w-7xl lg:px-6 lg:py-8">
+        <div className="grid grid-cols-1 gap-0 lg:grid-cols-3 lg:gap-8">
+          {/* Viewer — single instance, responsive container.
+              Mobile/Tablet: flush full-width with bottom border.
+              Desktop: rounded card inside grid (col-span-2). */}
           <div
             ref={viewerRef}
-            className="lg:col-span-2 aspect-[4/3] lg:aspect-auto lg:h-[600px] rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 backdrop-blur-sm opacity-0 relative"
+            className="relative h-[52vh] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
           >
             {isLoading && <Loader />}
             <CarConfiguratorScene
@@ -225,9 +247,16 @@ export default function ConfiguratorPage() {
               onPartHover={handlePartHover}
             />
 
+            {/* LIVE PREVIEW pill — mobile + tablet only */}
+            <div className="pointer-events-none absolute left-3 top-3 z-[2] sm:left-4 sm:top-4 lg:hidden">
+              <span className="rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.22em] text-white/60 backdrop-blur-md sm:text-[10px]">
+                Live Preview
+              </span>
+            </div>
+
             {/* Hovered part indicator */}
             {hoveredPart && (
-              <div className="absolute top-4 left-4 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg border border-white/20">
+              <div className="absolute left-4 top-4 hidden rounded-lg border border-white/20 bg-black/60 px-4 py-2 backdrop-blur-sm lg:block">
                 <p className="text-sm text-white">
                   <span className="text-[var(--accent)]">Hover:</span>{" "}
                   {partConfigs.find((p) => p.id === hoveredPart)?.name}
@@ -235,9 +264,19 @@ export default function ConfiguratorPage() {
               </div>
             )}
 
-            {/* Selected part indicator */}
+            {/* Hovered indicator on tablet */}
+            {hoveredPart && (
+              <div className="absolute right-4 top-4 z-[2] hidden rounded-full border border-white/10 bg-black/55 px-3 py-1 backdrop-blur-md sm:block lg:hidden">
+                <span className="text-[11px] text-white/85">
+                  <span className="text-[var(--accent)]">Hover:</span>{" "}
+                  {partConfigs.find((p) => p.id === hoveredPart)?.name}
+                </span>
+              </div>
+            )}
+
+            {/* Selected indicator — desktop original */}
             {selectedPart && (
-              <div className="absolute bottom-4 left-4 px-4 py-2 bg-[var(--accent)]/15 backdrop-blur-sm rounded-lg border border-[var(--accent)]/40">
+              <div className="absolute bottom-4 left-4 hidden rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/15 px-4 py-2 backdrop-blur-sm lg:block">
                 <p className="text-sm text-white">
                   <span className="text-[var(--accent)]">Editing:</span>{" "}
                   {currentPartConfig?.name}
@@ -245,14 +284,29 @@ export default function ConfiguratorPage() {
               </div>
             )}
 
-            {/* Controls hint */}
-            <div className="absolute bottom-4 right-4 text-xs text-white/40">
+            {/* Selected indicator — mobile + tablet */}
+            {selectedPart && (
+              <div className="absolute bottom-3 left-3 z-[2] rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/15 px-2.5 py-1 backdrop-blur-sm sm:bottom-4 sm:left-4 sm:px-3 sm:py-1.5 lg:hidden">
+                <span className="block text-[8px] font-medium uppercase tracking-[0.2em] text-[var(--accent)] sm:text-[10px]">
+                  Editing
+                </span>
+                <span className="block text-[12px] font-medium text-white sm:text-sm">
+                  {currentPartConfig?.name}
+                </span>
+              </div>
+            )}
+
+            {/* Camera hint — hidden on mobile, visible on tablet & desktop */}
+            <div className="absolute bottom-4 right-4 hidden text-xs text-white/40 sm:block">
               🖱️ Drag to rotate • 🔍 Scroll to zoom
             </div>
           </div>
 
-          {/* Configuration Panel - Takes 1/3 of space */}
-          <div ref={panelRef} className="space-y-4 lg:h-[600px] h-full overflow-y-auto opacity-0">
+          {/* Desktop panel — UNCHANGED original markup */}
+          <div
+            ref={panelRef}
+            className="hidden lg:col-span-1 lg:block lg:h-[600px] lg:space-y-4 lg:overflow-y-auto lg:opacity-0"
+          >
             {/* Part Selection Panel */}
             <ConfigPanel
               title="Select Part"
@@ -329,7 +383,6 @@ export default function ConfiguratorPage() {
                             </svg>
                           </div>
                         )}
-                        {/* Tooltip on hover */}
                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                           {color.name}
                         </span>
@@ -340,7 +393,7 @@ export default function ConfiguratorPage() {
                     Selected:{" "}
                     <span className="text-white font-medium">
                       {colorOptions.find(
-                        (c) => c.value === partColors[selectedPart]
+                        (c) => c.value === partColors[selectedPart],
                       )?.name || "Custom"}
                     </span>
                   </p>
@@ -359,7 +412,10 @@ export default function ConfiguratorPage() {
               </h3>
               <div className="space-y-3 text-sm mb-6">
                 {partConfigs.map((part) => (
-                  <div key={part.id} className="flex items-center justify-between">
+                  <div
+                    key={part.id}
+                    className="flex items-center justify-between"
+                  >
                     <span className="text-[var(--muted)] flex items-center gap-2">
                       <span>{part.icon}</span>
                       {part.name}
@@ -370,8 +426,9 @@ export default function ConfiguratorPage() {
                         style={{ backgroundColor: partColors[part.id] }}
                       />
                       <span className="text-white text-xs">
-                        {colorOptions.find((c) => c.value === partColors[part.id])
-                          ?.name || "Custom"}
+                        {colorOptions.find(
+                          (c) => c.value === partColors[part.id],
+                        )?.name || "Custom"}
                       </span>
                     </div>
                   </div>
@@ -399,9 +456,200 @@ export default function ConfiguratorPage() {
             {/* Info Card */}
             <div className="p-4 rounded-xl bg-gradient-to-r from-[var(--accent)]/10 to-[var(--violet)]/10 border border-[var(--accent)]/20">
               <p className="text-sm text-[#e2fbff]">
-                <span className="font-semibold">💡 Tip:</span> Click directly on
-                car parts in the 3D view to select them for customization!
+                <span className="font-semibold">💡 Tip:</span> Click directly
+                on car parts in the 3D view to select them for customization!
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile + Tablet panel — outside the desktop grid, hidden on lg */}
+        <div
+          ref={mobilePanelRef}
+          className="grid grid-cols-1 pb-20 opacity-0 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-white/[0.06] sm:pb-0 lg:hidden"
+        >
+          {/* Pinch-to-zoom hint — mobile only */}
+          <div className="border-b border-white/[0.04] py-2 text-center text-[10px] uppercase tracking-[0.22em] text-white/25 sm:hidden sm:col-span-2">
+            Drag to rotate · Pinch to zoom
+          </div>
+
+          {/* Parts section */}
+          <section className="border-b border-white/[0.06] px-4 py-4 sm:border-b-0 sm:px-5 sm:py-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-monument text-[9px] uppercase tracking-[0.22em] text-white/85 sm:text-[11px]">
+                Select Part
+              </h3>
+              <span className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px]">
+                {partConfigs.length} options
+              </span>
+            </div>
+            <div className="grid grid-cols-6 gap-[5px] sm:grid-cols-3 sm:gap-2">
+              {partConfigs.map((part) => {
+                const active = selectedPart === part.id;
+                return (
+                  <button
+                    key={part.id}
+                    type="button"
+                    onClick={() => handlePartSelect(part.id)}
+                    aria-pressed={active}
+                    className={`relative flex min-h-[56px] flex-col items-center justify-center rounded-xl border px-[4px] py-[8px] transition-colors duration-200 sm:min-h-0 sm:p-3 ${
+                      active
+                        ? "border-[var(--accent)] bg-[var(--accent)]/15"
+                        : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                    }`}
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    <span
+                      aria-hidden
+                      className="text-[13px] leading-none sm:text-base"
+                    >
+                      {part.icon}
+                    </span>
+                    <span className="mt-1 text-[9px] font-medium leading-none text-white sm:text-xs">
+                      {part.name}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="mt-1 block h-3 w-3 rounded-full border border-white/20 sm:h-4 sm:w-4"
+                      style={{ backgroundColor: partColors[part.id] }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Colors section */}
+          <section className="px-4 py-4 sm:px-5 sm:py-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-monument text-[9px] uppercase tracking-[0.22em] text-white/85 sm:text-[11px]">
+                {currentPartConfig?.name || "Part"} Color
+              </h3>
+              <span className="hidden text-[10px] uppercase tracking-[0.2em] text-white/35 sm:inline">
+                {colorOptions.length} swatches
+              </span>
+            </div>
+
+            {selectedPart ? (
+              <>
+                <div className="color-grid grid grid-cols-8 gap-[5px] sm:grid-cols-6 sm:gap-2.5">
+                  {colorOptions.map((color) => {
+                    const isOn = partColors[selectedPart] === color.value;
+                    return (
+                      <div
+                        key={color.id}
+                        className="-m-1 p-1"
+                        style={{ touchAction: "manipulation" }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleColorChange(color.value)}
+                          aria-pressed={isOn}
+                          aria-label={`Select ${color.name}`}
+                          title={color.name}
+                          className="relative aspect-square w-full rounded-full transition-transform duration-100 ease-out active:scale-[1.3]"
+                          style={{
+                            backgroundColor: color.value,
+                            touchAction: "manipulation",
+                            boxShadow: isOn
+                              ? "0 0 0 1.5px rgba(110,240,200,0.95), 0 0 0 4px rgba(110,240,200,0.18), inset 0 0 0 1px rgba(255,255,255,0.08)"
+                              : "0 0 0 1px rgba(255,255,255,0.10), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <p className="mt-3 text-[11px] text-white/55 sm:hidden">
+                  Selected:{" "}
+                  <span className="font-medium text-white">
+                    {colorOptions.find(
+                      (c) => c.value === partColors[selectedPart],
+                    )?.name || "Custom"}
+                  </span>
+                </p>
+                <div className="mt-3 hidden text-xs sm:flex sm:items-center sm:justify-between">
+                  <span className="uppercase tracking-[0.18em] text-white/40">
+                    Selected
+                  </span>
+                  <span className="text-white/85">
+                    {colorOptions.find(
+                      (c) => c.value === partColors[selectedPart],
+                    )?.name || "Custom"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-white/40">
+                Select a part above to change its color
+              </p>
+            )}
+          </section>
+
+          {/* Footer / CTA — sticky on mobile, inline + spans both columns on tablet */}
+          <div className="sticky bottom-0 z-10 border-t border-white/[0.08] bg-[#0a0a12] px-4 py-3 sm:static sm:col-span-2 sm:border-t sm:border-white/[0.05] sm:px-5 sm:py-4">
+            {/* Mobile compact build dots */}
+            <div className="mb-2.5 flex items-center gap-1.5 sm:hidden">
+              {partConfigs.map((part) => (
+                <span
+                  key={part.id}
+                  className="block h-1.5 w-1.5 rounded-full"
+                  style={{
+                    backgroundColor: partColors[part.id],
+                    boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
+                  }}
+                />
+              ))}
+              <span className="ml-auto text-[9px] uppercase tracking-[0.2em] text-white/35">
+                Build
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              {/* Tablet build dots + label */}
+              <div className="hidden sm:flex sm:items-center sm:gap-2">
+                <div className="flex items-center gap-1">
+                  {partConfigs.map((part) => (
+                    <span
+                      key={part.id}
+                      className="block h-2 w-2 rounded-full"
+                      style={{
+                        backgroundColor: partColors[part.id],
+                        boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
+                  Current build
+                </span>
+              </div>
+
+              <div className="flex items-stretch gap-2 sm:items-center sm:gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetColors}
+                  className="flex-1 rounded-xl border border-white/15 px-3 py-2.5 text-[12px] font-medium text-white/80 transition-colors hover:bg-white/5 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-[var(--accent)]/40 px-3 py-2.5 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/10 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  Save Build
+                </button>
+                <button
+                  type="button"
+                  className="flex-[1.5] rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] px-3 py-2.5 text-[12px] font-semibold text-[var(--bg)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--accent)]/25 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  Request Quote
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -409,10 +657,6 @@ export default function ConfiguratorPage() {
     </div>
   );
 }
-
-// ============================================
-// SUB-COMPONENTS
-// ============================================
 
 interface ConfigPanelProps {
   title: string;
@@ -431,7 +675,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 }) => {
   return (
     <div className="rounded-2xl bg-[var(--surface)]/90 border border-white/10 overflow-hidden backdrop-blur-sm">
-      {/* Panel Header - Clickable on mobile */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 lg:cursor-default"
@@ -457,7 +700,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </svg>
       </button>
 
-      {/* Panel Content */}
       <div
         className={`px-4 pb-4 transition-all duration-300  lg:block ${
           isOpen ? "block" : "hidden"

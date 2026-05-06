@@ -46,12 +46,12 @@ function nudgeScaleOriginX(cx: number, viewportWidth: number) {
   return cx - shift;
 }
 
-/** Shorter hero scroll range on small viewports so mobile/tablet pin duration matches content. */
-function heroTotalVhForWidth(w: number): number {
-  if (w < 480) return 220;
-  if (w < 768) return 245;
-  if (w < 1024) return 265;
-  return 280;
+/** Scroll distance (as vh) while hero remains pinned. */
+function heroPinDistanceVhForWidth(w: number): number {
+  if (w < 480) return 100;
+  if (w < 768) return 115;
+  if (w < 1024) return 130;
+  return 150;
 }
 
 const textStyle = (fontSize: number): CSSProperties => ({
@@ -109,7 +109,7 @@ export default function HeroSection({
   const [fontPx, setFontPx] = useState(0);
 
   const [maxScaleBoost, setMaxScaleBoost] = useState(45);
-  const [heroScrollVh, setHeroScrollVh] = useState(280);
+  const [heroPinDistanceVh, setHeroPinDistanceVh] = useState(125);
 
   const lenis = useLenis();
   const lenisRef = useRef(lenis);
@@ -128,11 +128,11 @@ export default function HeroSection({
   }, []);
 
   useEffect(() => {
-    const syncVh = () =>
-      setHeroScrollVh(heroTotalVhForWidth(window.innerWidth));
-    syncVh();
-    window.addEventListener("resize", syncVh, { passive: true });
-    return () => window.removeEventListener("resize", syncVh);
+    const syncPinDistance = () =>
+      setHeroPinDistanceVh(heroPinDistanceVhForWidth(window.innerWidth));
+    syncPinDistance();
+    window.addEventListener("resize", syncPinDistance, { passive: true });
+    return () => window.removeEventListener("resize", syncPinDistance);
   }, []);
 
   const syncSvgMaskGeometry = useCallback(() => {
@@ -382,7 +382,7 @@ export default function HeroSection({
     scrollTriggerRef.current = ScrollTrigger.create({
       trigger: section,
       start: "top top",
-      end: "bottom bottom",
+      end: () => `+=${window.innerHeight * (heroPinDistanceVh / 100)}`,
       pin: pinWrap,
       pinSpacing: true,
       anticipatePin: 1,
@@ -408,14 +408,14 @@ export default function HeroSection({
       scrollTriggerRef.current?.kill();
       scrollTriggerRef.current = null;
     };
-  }, [fontsReady, heroScrollVh, maxScaleBoost]);
+  }, [fontsReady, heroPinDistanceVh, maxScaleBoost]);
 
   return (
     <section
       ref={sectionRef}
       id={sectionId}
       className="relative w-full bg-transparent"
-      style={{ height: `${heroScrollVh}vh` }}
+      style={{ height: "100dvh" }}
     >
       <svg
         aria-hidden

@@ -8,6 +8,7 @@ import AboutSection from "@/components/ui/AboutSection";
 import ContactSection from "@/components/ui/ContactSection";
 import Navigation from "@/components/ui/Navbar";
 import ProjectsSection, { type ProjectCard } from "@/components/ui/ProjectsSection";
+import CarConfiguratorDemoSection from "@/components/ui/CarConfiguratorDemoSection";
 
 const PROJECTS_DATA: ProjectCard[] = [
   {
@@ -58,7 +59,7 @@ const HeroSection = dynamic(() => import("@/components/HeroSection"), {
   ssr: false,
   loading: () => (
     <section
-      className="relative min-h-[220vh] w-full bg-black sm:min-h-[245vh] lg:min-h-[265vh] xl:min-h-[280vh]"
+      className="relative min-h-[100dvh] w-full bg-black"
       aria-hidden
     >
       <div className="sticky top-0 flex h-[100dvh] w-full items-center justify-center overflow-hidden">
@@ -148,6 +149,7 @@ export default function Home() {
         <CustomCursor />
         <HeroSection sectionId="home" onHeroReady={() => setHeroReady(true)} />
         <ProjectsSection projects={PROJECTS_DATA} />
+        <CarConfiguratorDemoSection />
         <AboutSection />
         <ContactSection />
       </main>
