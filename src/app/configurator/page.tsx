@@ -237,7 +237,7 @@ export default function ConfiguratorPage() {
               Desktop: rounded card inside grid (col-span-2). */}
           <div
             ref={viewerRef}
-            className="relative h-[52vh] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
+            className="relative h-[52vh] min-h-[260px] max-h-[420px] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] sm:max-h-[520px] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:max-h-none lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
           >
             {isLoading && <Loader />}
             <CarConfiguratorScene
@@ -466,7 +466,7 @@ export default function ConfiguratorPage() {
         {/* Mobile + Tablet panel — outside the desktop grid, hidden on lg */}
         <div
           ref={mobilePanelRef}
-          className="grid grid-cols-1 pb-20 opacity-0 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-white/[0.06] sm:pb-0 lg:hidden"
+          className="relative z-[2] grid grid-cols-1 bg-[#0a0a12] pb-20 opacity-0 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-white/[0.06] sm:pb-0 lg:hidden"
         >
           {/* Pinch-to-zoom hint — mobile only */}
           <div className="border-b border-white/[0.04] py-2 text-center text-[10px] uppercase tracking-[0.22em] text-white/25 sm:hidden sm:col-span-2">
@@ -483,7 +483,10 @@ export default function ConfiguratorPage() {
                 {partConfigs.length} options
               </span>
             </div>
-            <div className="grid grid-cols-6 gap-[5px] sm:grid-cols-3 sm:gap-2">
+            <div
+              className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0"
+              style={{ touchAction: "pan-x" }}
+            >
               {partConfigs.map((part) => {
                 const active = selectedPart === part.id;
                 return (
@@ -492,7 +495,7 @@ export default function ConfiguratorPage() {
                     type="button"
                     onClick={() => handlePartSelect(part.id)}
                     aria-pressed={active}
-                    className={`relative flex min-h-[56px] flex-col items-center justify-center rounded-xl border px-[4px] py-[8px] transition-colors duration-200 sm:min-h-0 sm:p-3 ${
+                    className={`relative flex min-h-[64px] w-[76px] shrink-0 snap-start flex-col items-center justify-center rounded-xl border px-2 py-2 transition-colors duration-200 sm:min-h-0 sm:w-auto sm:shrink sm:p-3 ${
                       active
                         ? "border-[var(--accent)] bg-[var(--accent)]/15"
                         : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
@@ -501,11 +504,11 @@ export default function ConfiguratorPage() {
                   >
                     <span
                       aria-hidden
-                      className="text-[13px] leading-none sm:text-base"
+                      className="text-[14px] leading-none sm:text-base"
                     >
                       {part.icon}
                     </span>
-                    <span className="mt-1 text-[9px] font-medium leading-none text-white sm:text-xs">
+                    <span className="mt-1 text-[10px] font-medium leading-none text-white sm:text-xs">
                       {part.name}
                     </span>
                     <span
@@ -532,7 +535,7 @@ export default function ConfiguratorPage() {
 
             {selectedPart ? (
               <>
-                <div className="color-grid grid grid-cols-8 gap-[5px] sm:grid-cols-6 sm:gap-2.5">
+                <div className="color-grid grid grid-cols-6 gap-2 sm:grid-cols-6 sm:gap-2.5">
                   {colorOptions.map((color) => {
                     const isOn = partColors[selectedPart] === color.value;
                     return (

@@ -128,26 +128,26 @@ export default function CarConfiguratorDemoSection() {
   return (
     <section
       id="configurator-demo"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]/90 px-4 py-20 backdrop-blur-[2px] sm:px-6 sm:py-24 lg:py-28"
+      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]/90 px-4 py-14 backdrop-blur-[2px] sm:px-6 sm:py-24 lg:py-28"
     >
       <div className="mx-auto w-full max-w-[1200px]">
         <motion.header
-          className="mb-8 max-w-2xl sm:mb-10"
+          className="mb-6 max-w-2xl sm:mb-10"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-10% 0px" }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="mb-3 text-xs uppercase tracking-[0.22em] text-[var(--accent)]">
+          <p className="mb-2 text-[0.7rem] uppercase tracking-[0.22em] text-[var(--accent)] sm:mb-3 sm:text-xs">
             03 / Demo
           </p>
-          <h2 className="font-monument text-3xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
+          <h2 className="font-monument text-2xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
             Configure your drive
           </h2>
-          <p className="font-neue mt-3 text-[0.9rem] leading-relaxed text-gray-400">
+          <p className="font-neue mt-2 text-[0.85rem] leading-relaxed text-gray-400 sm:mt-3 sm:text-[0.9rem]">
             A real-time, in-browser configurator. Pick a part, swap a finish — see it instantly.
           </p>
-          <div className="mt-4 h-px w-20 bg-[var(--accent)]" />
+          <div className="mt-3 h-px w-16 bg-[var(--accent)] sm:mt-4 sm:w-20" />
         </motion.header>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">

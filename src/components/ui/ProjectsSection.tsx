@@ -391,12 +391,12 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                   }`}
                 />
 
-                <div className="relative flex h-full flex-col p-5 transition-[transform,box-shadow] duration-300 ease-out group-hover/card:-translate-y-3 group-hover/card:shadow-[0_24px_72px_-16px_rgba(0,0,0,0.55)]">
-                  <div className="pointer-events-none absolute right-3 top-2 font-monument text-[3.5rem] leading-none text-white/[0.15]">
+                <div className="relative flex h-full flex-col p-4 transition-[transform,box-shadow] duration-300 ease-out group-hover/card:-translate-y-3 group-hover/card:shadow-[0_24px_72px_-16px_rgba(0,0,0,0.55)] sm:p-5">
+                  <div className="pointer-events-none absolute right-2 top-1.5 font-monument text-[2.1rem] leading-none text-white/[0.15] sm:right-3 sm:top-2 sm:text-[3.5rem]">
                     {String(i + 1).padStart(2, "0")}
                   </div>
 
-                  <div className="relative z-[1] flex items-start justify-between gap-4 pr-14 sm:pr-16">
+                  <div className="relative z-[1] flex items-start justify-between gap-4 pr-10 sm:pr-16">
                     <span
                       className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${project.tagClass}`}
                     >
@@ -404,44 +404,34 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                     </span>
                   </div>
 
-                  <h3 className="font-monument relative z-[1] mt-4 text-[clamp(1.15rem,calc(0.35rem+4.2vw),1.6rem)] leading-[1.12] text-white">
+                  <h3 className="font-monument relative z-[1] mt-3 text-[clamp(1.05rem,calc(0.35rem+4.2vw),1.6rem)] leading-[1.12] text-white sm:mt-4">
                     {project.name}
                   </h3>
 
-                  <div className="relative z-[1] mt-4 flex flex-wrap gap-2">
+                  <div className="relative z-[1] mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
                     {project.tech.map((item) => (
                       <span
                         key={item}
-                        className="rounded-full border border-[var(--border)] bg-[var(--surface-2)]/50 px-2.5 py-1 text-xs text-[var(--muted)]"
+                        className="rounded-full border border-[var(--border)] bg-[var(--surface-2)]/50 px-2 py-0.5 text-[0.7rem] text-[var(--muted)] sm:px-2.5 sm:py-1 sm:text-xs"
                       >
                         {item}
                       </span>
                     ))}
                   </div>
 
-                  <motion.div
-                    className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-5"
-                    variants={{
-                      rest: { opacity: 0, y: 10 },
-                      hover: {
-                        opacity: 1,
-                        y: 0,
-                        transition: { duration: 0.2 },
-                      },
-                    }}
-                  >
-                    <p className="text-[0.85rem] leading-relaxed text-gray-400">
+                  <div className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-4 opacity-100 [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-[opacity,transform] [@media(hover:hover)]:duration-200 [@media(hover:hover)]:ease-out [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 sm:pt-5">
+                    <p className="text-[0.82rem] leading-relaxed text-gray-400 sm:text-[0.85rem]">
                       {project.description}
                     </p>
                     <a
                       href={project.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[0.9rem] font-medium text-[var(--accent)] hover:text-[var(--accent-dim)]"
+                      className="inline-flex items-center gap-1 text-[0.85rem] font-medium text-[var(--accent)] hover:text-[var(--accent-dim)] sm:text-[0.9rem]"
                     >
                       Live Demo →
                     </a>
-                  </motion.div>
+                  </div>
                 </div>
               </motion.article>
             ))}

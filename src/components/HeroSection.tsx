@@ -157,13 +157,19 @@ export default function HeroSection({
     rect.setAttribute("width", String(w));
     rect.setAttribute("height", String(h));
 
+    /** Mobile screens get tighter vertical spacing so the two name
+     *  lines don't drift apart visually. Desktop layout unchanged. */
+    const isMobile = w < 640;
+    const aimenY = isMobile ? h * 0.38 : h * 0.45;
+    const qaiserY = isMobile ? h * 0.68 : h * 0.75;
+
     if (t1 && fontPx > 0) {
       t1.setAttribute("x", String(w / 2));
-      t1.setAttribute("y", String(h * 0.45));
+      t1.setAttribute("y", String(aimenY));
     }
     if (t2 && fontPx > 0) {
       t2.setAttribute("x", String(w / 2));
-      t2.setAttribute("y", String(h * 0.75));
+      t2.setAttribute("y", String(qaiserY));
     }
   }, [fontPx]);
 
@@ -567,15 +573,11 @@ export default function HeroSection({
 
         <div
           ref={scrollHintRef}
-          className="pointer-events-none absolute left-1/2 z-[3] flex -translate-x-1/2 flex-col items-center gap-3 select-none"
-          style={{
-            bottom: "max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))",
-          }}
+          className="pointer-events-none absolute left-1/2 z-[3] flex -translate-x-1/2 flex-col items-center gap-2 sm:gap-3 select-none [bottom:max(1.5rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] sm:[bottom:max(2rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))]"
         >
           <span
-            className="font-neue uppercase text-white"
+            className="font-neue uppercase text-white text-[0.55rem] sm:text-[0.65rem]"
             style={{
-              fontSize: "0.65rem",
               letterSpacing: "0.4em",
               opacity: 0.35,
             }}
@@ -583,8 +585,8 @@ export default function HeroSection({
             Scroll
           </span>
           <div
-            className="hero-scroll-line w-px bg-white opacity-20"
-            style={{ height: 40, transformOrigin: "bottom center" }}
+            className="hero-scroll-line w-px bg-white opacity-20 h-7 sm:h-10"
+            style={{ transformOrigin: "bottom center" }}
           />
         </div>
       </div>
