@@ -48,11 +48,18 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
       lenis.scrollTo(0, { immediate: true });
     };
 
+    /** On touch devices we let the native scroller drive the page so
+     *  ScrollTrigger pin / scrub stay smooth on iOS Safari. Lenis only
+     *  smooths wheel input on desktop. */
+    const isTouchDevice =
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches;
+
     const instance = new Lenis({
       duration: 1.2,
       smoothWheel: true,
-      syncTouch: true,
-      touchMultiplier: 1,
+      syncTouch: false,
+      touchMultiplier: isTouchDevice ? 0 : 1,
       wheelMultiplier: 1,
       naiveDimensions: true,
     });

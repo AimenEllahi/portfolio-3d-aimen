@@ -103,7 +103,7 @@ export default function Home() {
     const failSafe = window.setTimeout(() => {
       setHeroReady(true);
       setSceneReady(true);
-    }, 10000);
+    }, 12000);
     return () => window.clearTimeout(failSafe);
   }, []);
 

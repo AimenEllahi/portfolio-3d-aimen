@@ -26,17 +26,20 @@
 html,
 body {
   min-height: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* `overflow: clip` clips horizontal overflow without creating a new
+     scroll container, so position: sticky / ScrollTrigger pinning still
+     works on iOS Safari. Falls back gracefully where unsupported. */
+  overflow-x: clip;
 }
 
 body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 img,

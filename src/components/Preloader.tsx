@@ -24,10 +24,20 @@ const wipeEase = [0.76, 0, 0.24, 1] as const;
 
 type IntroPhase = "aq-in" | "aq-wait" | "names";
 
+/** Animation timing knobs — slowed slightly so the intro reads as
+ *  deliberate rather than rushed. */
+const AQ_ENTER_MS = 1100;
+const AQ_WAIT_MS = 700;
+const AQ_FLYOUT_MS = 1000;
+const LETTER_STAGGER_S = 0.07;
+const LETTER_DURATION_S = 0.9;
+const SCAN_DURATION_S = 1.4;
+const POST_SCAN_HOLD_MS = 350;
+
 const containerVariants = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.06, delayChildren: 0 },
+    transition: { staggerChildren: LETTER_STAGGER_S, delayChildren: 0 },
   },
   explode: {
     transition: { staggerChildren: 0 },
@@ -44,7 +54,7 @@ const letterVariants = {
     opacity: 1,
     y: 0,
     rotateX: 0,
-    transition: { duration: 0.8, ease: letterEase },
+    transition: { duration: LETTER_DURATION_S, ease: letterEase },
   },
   explode: {
     scale: 1.15,
@@ -122,6 +132,10 @@ export default function Preloader({
   const [exitArmed, setExitArmed] = useState(false);
   const [wipeStarted, setWipeStarted] = useState(false);
   const [showScan, setShowScan] = useState(false);
+  /** Becomes true once the scan-line has finished sweeping AND a small
+   *  hold has elapsed. We refuse to start the exit wipe before this so
+   *  the intro never gets cut off mid-animation. */
+  const [introAnimationComplete, setIntroAnimationComplete] = useState(false);
 
   const exitSequenceStartedRef = useRef(false);
   const finishedRef = useRef(false);
@@ -132,7 +146,10 @@ export default function Preloader({
 
   const letters = NAME.split("");
   const lastLetterIndex = letters.length - 1;
-  const scanDelayMs = lastLetterIndex * 0.06 * 1000 + 800 + 50;
+  const scanDelayMs =
+    lastLetterIndex * LETTER_STAGGER_S * 1000 +
+    LETTER_DURATION_S * 1000 +
+    50;
 
   const p = Math.min(100, Math.max(0, progress));
   const showNameBlock = introPhase === "names";
@@ -147,15 +164,30 @@ export default function Preloader({
   }, [showNameBlock, scanDelayMs]);
 
   useEffect(() => {
-    if (p < 100 || !extrasReady || exitSequenceStartedRef.current) return;
+    if (!showScan) return;
+    const t = window.setTimeout(
+      () => setIntroAnimationComplete(true),
+      SCAN_DURATION_S * 1000 + POST_SCAN_HOLD_MS,
+    );
+    return () => window.clearTimeout(t);
+  }, [showScan]);
+
+  useEffect(() => {
+    if (
+      p < 100 ||
+      !extrasReady ||
+      !introAnimationComplete ||
+      exitSequenceStartedRef.current
+    )
+      return;
     exitSequenceStartedRef.current = true;
     const t = window.setTimeout(() => setExitArmed(true), 400);
     return () => window.clearTimeout(t);
-  }, [p, extrasReady]);
+  }, [p, extrasReady, introAnimationComplete]);
 
   useEffect(() => {
     if (!exitArmed) return;
-    const t = window.setTimeout(() => setWipeStarted(true), 600);
+    const t = window.setTimeout(() => setWipeStarted(true), 700);
     return () => window.clearTimeout(t);
   }, [exitArmed]);
 
@@ -170,7 +202,7 @@ export default function Preloader({
         (window as Window & { __heroPreloaderComplete?: boolean }).__heroPreloaderComplete = true;
         window.dispatchEvent(new CustomEvent("hero-preloader-complete"));
       }
-    }, 920);
+    }, 1080);
     return () => window.clearTimeout(t);
   }, [wipeStarted]);
 
@@ -196,7 +228,7 @@ export default function Preloader({
       }
       transition={
         wipeStarted
-          ? { duration: 0.9, ease: wipeEase }
+          ? { duration: 1.05, ease: wipeEase }
           : { duration: 0 }
       }
     >
@@ -242,8 +274,8 @@ export default function Preloader({
         }
         transition={
           introPhase === "names"
-            ? { duration: 0.9, ease: letterEase }
-            : { duration: 1, ease: letterEase }
+            ? { duration: AQ_FLYOUT_MS / 1000, ease: letterEase }
+            : { duration: AQ_ENTER_MS / 1000, ease: letterEase }
         }
         onAnimationComplete={() => {
           if (aqEnterCompleteRef.current) return;
@@ -251,8 +283,9 @@ export default function Preloader({
           setIntroPhase("aq-wait");
           aqWaitTimerRef.current = window.setTimeout(
             () => setIntroPhase("names"),
-            600,
-          );        }}
+            AQ_WAIT_MS,
+          );
+        }}
       >
         AQ
       </motion.div>
@@ -330,7 +363,7 @@ export default function Preloader({
               }}
               initial={{ top: "-1px" }}
               animate={{ top: "calc(100% - 1px)" }}
-              transition={{ duration: 1.2, ease: "linear" }}
+              transition={{ duration: SCAN_DURATION_S, ease: "linear" }}
             />
           )}
         </div>
