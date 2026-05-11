@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
@@ -124,6 +124,43 @@ export default function CarConfiguratorDemoSection() {
     const v = partColors[selectedPart];
     return COLOR_OPTIONS.find((c) => c.value === v)?.name || "Custom";
   }, [partColors, selectedPart]);
+
+  // Palette overlay state & hint for when no part is selected
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [showPaletteHint, setShowPaletteHint] = useState(false);
+  const hintTimerRef = useRef<number | null>(null);
+
+  const togglePalette = () => {
+    if (!selectedPart) {
+      // show a short hint prompting selection
+      setShowPaletteHint(true);
+      if (hintTimerRef.current) window.clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = window.setTimeout(() => {
+        setShowPaletteHint(false);
+        hintTimerRef.current = null;
+      }, 1200) as unknown as number;
+      return;
+    }
+    setPaletteOpen((s) => !s);
+  };
+
+  useEffect(() => {
+    if (!paletteOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPaletteOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [paletteOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (hintTimerRef.current) {
+        window.clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <section
@@ -289,36 +326,23 @@ export default function CarConfiguratorDemoSection() {
 
               {selectedPart ? (
                 <>
-                  <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
-                    {COLOR_OPTIONS.map((color) => {
-                      const isOn = partColors[selectedPart] === color.value;
-                      return (
-                        <button
-                          key={color.id}
-                          type="button"
-                          onClick={() => handleColorChange(color.value)}
-                          aria-pressed={isOn}
-                          aria-label={`Choose ${color.name}`}
-                          title={color.name}
-                          className={`relative aspect-square rounded-full transition-transform duration-200 ease-out hover:scale-[1.08] ${
-                            isOn ? "scale-[1.06]" : ""
-                          }`}
-                          style={{
-                            backgroundColor: color.value,
-                            boxShadow: isOn
-                              ? "0 0 0 1.5px rgba(110,240,200,0.95), 0 0 0 4px rgba(110,240,200,0.18), inset 0 0 0 1px rgba(255,255,255,0.08)"
-                              : "0 0 0 1px rgba(255,255,255,0.10), inset 0 0 0 1px rgba(255,255,255,0.06)",
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between text-[0.72rem] text-white/55">
-                    <span className="uppercase tracking-[0.2em] text-white/35">
-                      Selected
-                    </span>
-                    <span className="text-white/85">{activeColorName}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={togglePalette}
+                      className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/60 px-3 py-1.5 text-[0.78rem] font-medium text-white/90 hover:bg-black/65"
+                    >
+                      Open palette
+                    </button>
+                    {showPaletteHint && (
+                      <span
+                        aria-hidden
+                        className="rounded-md bg-black/75 px-2 py-1 text-[0.7rem] text-white/90"
+                      >
+                        Select a part first
+                      </span>
+                    )}
+                    <span className="text-[0.72rem] text-white/55">{activeColorName}</span>
                   </div>
                 </>
               ) : (
@@ -343,6 +367,68 @@ export default function CarConfiguratorDemoSection() {
                   <span aria-hidden>→</span>
                 </Link>
               </div>
+              {/* Floating palette overlay */}
+              <AnimatePresence>
+                {paletteOpen && (
+                  <motion.div
+                    className="fixed inset-0 z-[1200] flex items-end justify-center sm:items-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setPaletteOpen(false)}
+                  >
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <motion.div
+                      className="relative m-4 w-full max-w-md rounded-2xl bg-[var(--surface)]/95 p-4 shadow-xl"
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 20, opacity: 0 }}
+                      transition={{ duration: 0.28 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <h4 className="text-sm font-semibold">Palette</h4>
+                        <button
+                          aria-label="Close palette"
+                          onClick={() => setPaletteOpen(false)}
+                          className="text-sm text-white/60"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-6 gap-2">
+                        {COLOR_OPTIONS.map((color) => {
+                          const isOn = selectedPart
+                            ? partColors[selectedPart] === color.value
+                            : false;
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              onClick={() => {
+                                handleColorChange(color.value);
+                              }}
+                              aria-pressed={isOn}
+                              aria-label={`Choose ${color.name}`}
+                              title={color.name}
+                              className={`relative aspect-square rounded-full transition-transform duration-200 ease-out hover:scale-[1.08] ${
+                                isOn ? "scale-[1.06]" : ""
+                              }`}
+                              style={{
+                                backgroundColor: color.value,
+                                boxShadow: isOn
+                                  ? "0 0 0 1.5px rgba(110,240,200,0.95), 0 0 0 4px rgba(110,240,200,0.18), inset 0 0 0 1px rgba(255,255,255,0.08)"
+                                  : "0 0 0 1px rgba(255,255,255,0.10), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </aside>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
 import Loader from "@/components/Loader";
@@ -10,7 +11,6 @@ import {
   useConfiguratorStore,
   ConfigurablePart,
 } from "@/store/configuratorStore";
-
 interface ColorOption {
   id: string;
   name: string;
@@ -92,7 +92,7 @@ export default function ConfiguratorPage() {
   } = useConfiguratorStore();
 
   const [isLoading, setIsLoading] = useState(true);
-
+  const [showPalette, setShowPalette] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -110,13 +110,7 @@ export default function ConfiguratorPage() {
       gsap.fromTo(
         mobilePanelRef.current,
         { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.5,
-          delay: 0.2,
-          ease: "power2.out",
-        },
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.2, ease: "power2.out" },
       );
       return;
     }
@@ -145,6 +139,7 @@ export default function ConfiguratorPage() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+  // local UI state
 
   const handlePartSelect = (part: ConfigurablePart) => {
     setSelectedPart(part);
@@ -204,6 +199,19 @@ export default function ConfiguratorPage() {
     );
   };
 
+  // Palette toggle handlers (floating palette)
+  const togglePalette = () => setShowPalette((s) => !s);
+
+  // Close palette on Escape
+  useEffect(() => {
+    if (!showPalette) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowPalette(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPalette]);
+
   const currentPartConfig = partConfigs.find((p) => p.id === selectedPart);
 
   return (
@@ -246,6 +254,120 @@ export default function ConfiguratorPage() {
               onPartClick={handlePartClick}
               onPartHover={handlePartHover}
             />
+
+            {/* Floating palette toggle button */}
+            <div className="absolute right-4 bottom-4 z-[30] flex items-end">
+              <button
+                aria-expanded={showPalette}
+                aria-controls="floating-palette"
+                onClick={() => {
+                  if (!selectedPart) {
+                    // pulse mobile panel and show tooltip
+                    if (mobilePanelRef.current) {
+                      gsap.fromTo(
+                        mobilePanelRef.current,
+                        { boxShadow: "0 0 0 0 rgba(110,240,200,0)" },
+                        { boxShadow: "0 0 0 2px rgba(110,240,200,0.4)", duration: 0.3, yoyo: true, repeat: 1 },
+                      );
+                    }
+                    // show a temporary tooltip
+                    const tip = document.createElement("div");
+                    tip.textContent = "Select a part first";
+                    tip.className = "pointer-events-none absolute -top-12 right-0 rounded-full bg-black/70 px-3 py-1 text-xs text-white/90";
+                    const container = document.createElement("div");
+                    container.style.position = "relative";
+                    document.body.appendChild(tip);
+                    setTimeout(() => tip.remove(), 1500);
+                    return;
+                  }
+                  togglePalette();
+                }}
+                className={`pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full text-black shadow-lg hover:scale-105 active:scale-95 transition-transform ${
+                  selectedPart ? "bg-[var(--accent)]/95" : "bg-[var(--accent)]/40"
+                }`}
+                title={selectedPart ? "Open color palette" : "Select a part first"}
+              >
+                <span className="text-xl">🎨</span>
+              </button>
+            </div>
+
+            {/* Floating palette overlay */}
+            {showPalette && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                id="floating-palette"
+                className="fixed inset-0 z-[40] flex items-end justify-end"
+                onClick={() => setShowPalette(false)}
+              >
+                {/* Backdrop */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+                {/* Panel (click stops propagation) */}
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative m-4 max-h-[70vh] w-[320px] rounded-2xl bg-[var(--surface)]/95 border border-white/10 p-4 shadow-2xl overflow-auto"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h4 className="font-semibold text-white">Colors</h4>
+                    <button
+                      aria-label="Close palette"
+                      onClick={() => setShowPalette(false)}
+                      className="text-white/60 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {selectedPart ? (
+                    <>
+                      <p className="text-sm text-[var(--muted)] mb-3">
+                        {currentPartConfig?.description}
+                      </p>
+                      <div className="grid grid-cols-4 gap-3">
+                        {colorOptions.map((color) => (
+                          <button
+                            key={color.id}
+                            onClick={() => handleColorChange(color.value)}
+                            className={`group relative w-full aspect-square rounded-xl border-2 transition-all duration-300 hover:scale-110 ${
+                              partColors[selectedPart] === color.value
+                                ? "border-white shadow-lg shadow-white/20 scale-110"
+                                : "border-white/20 hover:border-white/40"
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                            aria-label={`Select ${color.name}`}
+                          >
+                            {partColors[selectedPart] === color.value && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <svg
+                                  className="w-5 h-5 text-white drop-shadow-lg"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-sm text-[var(--muted)]">
+                        Selected: <span className="text-white font-medium">
+                          {colorOptions.find((c) => c.value === partColors[selectedPart])?.name || "Custom"}
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[var(--muted)] text-sm">Select a part to change its color</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* LIVE PREVIEW pill — mobile + tablet only */}
             <div className="pointer-events-none absolute left-3 top-3 z-[2] sm:left-4 sm:top-4 lg:hidden">

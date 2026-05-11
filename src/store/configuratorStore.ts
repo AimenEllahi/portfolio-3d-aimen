@@ -27,8 +27,9 @@ interface ConfiguratorState {
 
 export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
   partColors: defaultPartColors,
-  selectedPart: "body",
+  selectedPart: null,
   hoveredPart: null,
+  // open parts panel by default to guide the user
   activePanel: "parts",
 
   setPartColor: (part, color) =>
@@ -40,5 +41,6 @@ export const useConfiguratorStore = create<ConfiguratorState>((set) => ({
 
   setActivePanel: (panel) => set({ activePanel: panel }),
 
-  resetColors: () => set({ partColors: defaultPartColors }),
+  resetColors: () =>
+    set({ partColors: defaultPartColors, selectedPart: null, activePanel: "parts" }),
 }));

@@ -16,6 +16,8 @@ export type PreloaderProps = {
 };
 
 const NAME = "AIMEN QAISER";
+const LINE1 = "AIMEN";
+const LINE2 = "QAISER";
 
 const letterEase = [0.16, 1, 0.3, 1] as const;
 const wipeEase = [0.76, 0, 0.24, 1] as const;
@@ -144,8 +146,8 @@ export default function Preloader({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  const letters = NAME.split("");
-  const lastLetterIndex = letters.length - 1;
+  const letters = (LINE1 + " " + LINE2).split("");
+  const lastLetterIndex = LINE1.length + LINE2.length - 1;
   const scanDelayMs =
     lastLetterIndex * LETTER_STAGGER_S * 1000 +
     LETTER_DURATION_S * 1000 +
@@ -324,33 +326,64 @@ export default function Preloader({
             />
           )}
           {showNameBlock && (
-            <motion.div
-              className="relative z-10 flex flex-wrap justify-center"
-              style={{ transformStyle: "preserve-3d" }}
-              variants={containerVariants}
-              initial="hidden"
-              animate={exitArmed ? "explode" : "visible"}
-            >
-              {letters.map((char, i) => (
-                <motion.span
-                  key={`${char}-${i}`}
-                  variants={letterVariants}
-                  className="inline-block select-none"
-                  style={{
-                    transformOrigin: "50% 50%",
-                    color: "#f5f0eb",
-                    fontSize: "clamp(4rem, 10vw, 9rem)",
-                    lineHeight: 1,
-                    fontFamily:
-                      "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  {char === " " ? "\u00A0" : char}
-                </motion.span>
-              ))}
-            </motion.div>
+            <div className="relative z-10 flex flex-col items-center gap-1 sm:gap-2" style={{ transformStyle: "preserve-3d" }}>
+              {/* Line 1 */}
+              <motion.div
+                className="flex justify-center"
+                variants={containerVariants}
+                initial="hidden"
+                animate={exitArmed ? "explode" : "visible"}
+              >
+                {LINE1.split("").map((char, i) => (
+                  <motion.span
+                    key={`l1-${i}`}
+                    variants={letterVariants}
+                    className="inline-block select-none"
+                    style={{
+                      transformOrigin: "50% 50%",
+                      color: "#f5f0eb",
+                      fontSize: "clamp(1.9rem, 8.5vw, 9rem)",
+                      lineHeight: 1,
+                      fontFamily:
+                        "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.div>
+
+              {/* Line 2 */}
+              <motion.div
+                className="flex justify-center"
+                variants={containerVariants}
+                initial="hidden"
+                animate={exitArmed ? "explode" : "visible"}
+                transition={{ delayChildren: LINE1.length * LETTER_STAGGER_S }}
+              >
+                {LINE2.split("").map((char, i) => (
+                  <motion.span
+                    key={`l2-${i}`}
+                    variants={letterVariants}
+                    className="inline-block select-none"
+                    style={{
+                      transformOrigin: "50% 50%",
+                      color: "#f5f0eb",
+                      fontSize: "clamp(1.9rem, 8.5vw, 9rem)",
+                      lineHeight: 1,
+                      fontFamily:
+                        "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </div>
           )}
 
           {showNameBlock && showScan && !exitArmed && (
