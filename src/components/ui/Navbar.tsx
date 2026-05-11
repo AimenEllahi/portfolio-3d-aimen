@@ -82,7 +82,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed left-1/2 z-[60] hidden w-[94%] -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 backdrop-blur-md transition-colors [top:max(1rem,env(safe-area-inset-top,0px))] sm:w-[90%] sm:[top:max(1.5rem,env(safe-area-inset-top,0px))] lg:block ${
+        className={`fixed left-1/2 z-[100] hidden w-[94%] -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 backdrop-blur-md transition-colors [top:max(1rem,env(safe-area-inset-top,0px))] sm:w-[90%] sm:[top:max(1.5rem,env(safe-area-inset-top,0px))] lg:block ${
           showBorder ? "shadow-[0_0_0_1px_rgba(255,255,255,0.04)]" : ""
         }`}
       >
@@ -126,7 +126,7 @@ export default function Navbar() {
       </header>
 
       <header
-        className={`fixed left-1/2 z-[60] w-[94%] -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 backdrop-blur-md transition-colors [top:max(1rem,env(safe-area-inset-top,0px))] sm:w-[90%] sm:[top:max(1.5rem,env(safe-area-inset-top,0px))] lg:hidden ${
+        className={`fixed left-1/2 z-[100] w-[94%] -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 backdrop-blur-md transition-colors [top:max(1rem,env(safe-area-inset-top,0px))] sm:w-[90%] sm:[top:max(1.5rem,env(safe-area-inset-top,0px))] lg:hidden ${
           showBorder ? "shadow-[0_0_0_1px_rgba(255,255,255,0.04)]" : ""
         }`}
       >

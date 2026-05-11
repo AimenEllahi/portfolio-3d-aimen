@@ -9,6 +9,8 @@ import ContactSection from "@/components/ui/ContactSection";
 import Navigation from "@/components/ui/Navbar";
 import ProjectsSection, { type ProjectCard } from "@/components/ui/ProjectsSection";
 import CarConfiguratorDemoSection from "@/components/ui/CarConfiguratorDemoSection";
+import MarqueeStrip from "@/components/ui/MarqueeStrip";
+import VoronoiShaderSection from "@/components/ui/VoronoiShaderSection";
 
 const PROJECTS_DATA: ProjectCard[] = [
   {
@@ -148,8 +150,10 @@ export default function Home() {
         <Navigation />
         <CustomCursor />
         <HeroSection sectionId="home" onHeroReady={() => setHeroReady(true)} />
+        <MarqueeStrip />
         <ProjectsSection projects={PROJECTS_DATA} />
         <CarConfiguratorDemoSection />
+        <VoronoiShaderSection />
         <AboutSection />
         <ContactSection />
       </main>

@@ -154,6 +154,29 @@ export default function CarConfiguratorDemoSection() {
   }, [paletteOpen]);
 
   useEffect(() => {
+    if (!paletteOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-palette-root]")) {
+        setPaletteOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, [paletteOpen]);
+
+  useEffect(() => {
+    if (paletteOpen && window.innerWidth < 640) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [paletteOpen]);
+
+  useEffect(() => {
     return () => {
       if (hintTimerRef.current) {
         window.clearTimeout(hintTimerRef.current);
@@ -246,7 +269,10 @@ export default function CarConfiguratorDemoSection() {
           </div>
 
           <aside className="flex flex-col gap-5">
-            <div className="rounded-2xl border border-white/10 bg-[var(--surface)]/85 p-5 backdrop-blur-sm">
+            <div
+              data-palette-root
+              className="relative rounded-2xl border border-white/10 bg-[var(--surface)]/85 p-5 backdrop-blur-sm"
+            >
               <div className="mb-4 flex items-baseline justify-between">
                 <h3 className="font-monument text-sm uppercase tracking-[0.22em] text-white/85">
                   Parts
@@ -370,33 +396,32 @@ export default function CarConfiguratorDemoSection() {
               {/* Floating palette overlay */}
               <AnimatePresence>
                 {paletteOpen && (
-                  <motion.div
-                    className="fixed inset-0 z-[1200] flex items-end justify-center sm:items-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setPaletteOpen(false)}
-                  >
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                  <>
+                    <div
+                      className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm sm:hidden"
+                      onClick={() => setPaletteOpen(false)}
+                    />
+
                     <motion.div
-                      className="relative m-4 w-full max-w-md rounded-2xl bg-[var(--surface)]/95 p-4 shadow-xl"
-                      initial={{ y: 30, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 20, opacity: 0 }}
-                      transition={{ duration: 0.28 }}
+                      className="absolute bottom-full left-0 right-0 z-[95] mb-2 rounded-2xl border border-white/10 bg-[#0d0d14] p-4 shadow-2xl sm:left-auto sm:right-0 sm:w-[280px]"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="mb-3 flex items-center justify-between">
-                        <h4 className="text-sm font-semibold">Palette</h4>
+                        <h4 className="text-xs font-medium uppercase tracking-[0.18em] text-white/60">
+                          {currentPartConfig?.name} color
+                        </h4>
                         <button
                           aria-label="Close palette"
                           onClick={() => setPaletteOpen(false)}
-                          className="text-sm text-white/60"
+                          className="text-sm text-white/40 transition-colors hover:text-white/80"
                         >
                           ✕
                         </button>
                       </div>
-
                       <div className="grid grid-cols-6 gap-2">
                         {COLOR_OPTIONS.map((color) => {
                           const isOn = selectedPart
@@ -406,27 +431,29 @@ export default function CarConfiguratorDemoSection() {
                             <button
                               key={color.id}
                               type="button"
-                              onClick={() => {
-                                handleColorChange(color.value);
-                              }}
+                              onClick={() => handleColorChange(color.value)}
                               aria-pressed={isOn}
                               aria-label={`Choose ${color.name}`}
                               title={color.name}
-                              className={`relative aspect-square rounded-full transition-transform duration-200 ease-out hover:scale-[1.08] ${
-                                isOn ? "scale-[1.06]" : ""
-                              }`}
+                              className="relative aspect-square rounded-full transition-transform duration-150 hover:scale-110 active:scale-95"
                               style={{
                                 backgroundColor: color.value,
                                 boxShadow: isOn
-                                  ? "0 0 0 1.5px rgba(110,240,200,0.95), 0 0 0 4px rgba(110,240,200,0.18), inset 0 0 0 1px rgba(255,255,255,0.08)"
-                                  : "0 0 0 1px rgba(255,255,255,0.10), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                                  ? "0 0 0 2px rgba(110,240,200,0.95), 0 0 0 4px rgba(110,240,200,0.2)"
+                                  : "0 0 0 1px rgba(255,255,255,0.12)",
                               }}
                             />
                           );
                         })}
                       </div>
+                      {activeColorName && (
+                        <p className="mt-3 text-[0.72rem] text-white/40">
+                          Selected:{" "}
+                          <span className="text-white/70">{activeColorName}</span>
+                        </p>
+                      )}
                     </motion.div>
-                  </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>

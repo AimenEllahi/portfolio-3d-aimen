@@ -27,7 +27,6 @@ type ProjectsSectionProps = {
 };
 
 const CARD_W = 438;
-const CARD_H = 256;
 const GAP = 18;
 const SECTION_MAX_INNER = 1104;
 const MIN_CARD_DRAW = 236;
@@ -44,8 +43,8 @@ function stackRotFor(i: number) {
 }
 
 /** Vertical position (px) of row-0 card centre relative to deck top. */
-function deckAnchorCenterY(): number {
-  return STAGE_PAD_Y + CARD_H / 2;
+function deckAnchorCenterY(cardH = 256): number {
+  return STAGE_PAD_Y + cardH / 2;
 }
 
 function estimateDeckInnerFromViewport(vw: number): number {
@@ -66,10 +65,10 @@ function preferTwoColumnSpread(
   return deckInnerW + 6 >= cardW * 2 + GAP;
 }
 
-function computeSpreadLayout(deckInnerW: number, count: number) {
+function computeSpreadLayout(deckInnerW: number, count: number, cardH = 256) {
   const cw = cardWidthForDeck(deckInnerW);
   const twoCol = preferTwoColumnSpread(deckInnerW, cw, count);
-  const stepY = CARD_H + GAP;
+  const stepY = cardH + GAP;
 
   if (count <= 0) {
     return { cw, twoCol, finals: [] as { x: number; y: number }[] };
@@ -105,25 +104,29 @@ function computeSpreadLayout(deckInnerW: number, count: number) {
   return { cw, twoCol, finals };
 }
 
-function spreadReserveMinHeightPx(deckInnerW: number, count: number): number {
+function spreadReserveMinHeightPx(deckInnerW: number, count: number, cardH = 256): number {
   const bottomPad = 28;
-  const { twoCol } = computeSpreadLayout(deckInnerW, count);
+  const { twoCol } = computeSpreadLayout(deckInnerW, count, cardH);
   const rows =
     count <= 0 ? 0 : twoCol ? Math.ceil(count / 2) : count;
-  const gridPx = CARD_H * rows + GAP * Math.max(0, rows - 1);
+  const gridPx = cardH * rows + GAP * Math.max(0, rows - 1);
   return STAGE_PAD_Y + gridPx + bottomPad;
 }
 
-function stackedCueTopForDeckSize(nCards: number, deckInnerW: number): number {
+function stackedCueTopForDeckSize(
+  nCards: number,
+  deckInnerW: number,
+  cardH = 256,
+): number {
   const base =
     STAGE_PAD_Y +
-    CARD_H +
+    cardH +
     Math.max(0, nCards - 1) * STACK_STEP_Y +
     CTA_GAP_BELOW_STACK;
-  const reserve = spreadReserveMinHeightPx(deckInnerW, nCards);
+  const reserve = spreadReserveMinHeightPx(deckInnerW, nCards, cardH);
   return Math.min(
     base,
-    Math.max(STAGE_PAD_Y + CARD_H, reserve - 100),
+    Math.max(STAGE_PAD_Y + cardH, reserve - 100),
   );
 }
 
@@ -141,14 +144,14 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   /** True after GSAP deal motion settles — hover uses full “hover” chime; stacked uses softer pulse. */
   const [dealSettled, setDealSettled] = useState(false);
   const n = projects.length;
-  const [deckInnerW, setDeckInnerW] = useState(() =>
-    typeof window !== "undefined"
-      ? estimateDeckInnerFromViewport(window.innerWidth)
-      : SECTION_MAX_INNER,
-  );
+  // SSR-safe defaults: avoid window-based initial values to prevent hydration mismatch.
+  const [deckInnerW, setDeckInnerW] = useState(SECTION_MAX_INNER);
+  const [cardH, setCardH] = useState(256);
+  const [isMobile, setIsMobile] = useState(false);
+  const CARD_H = cardH;
 
-  const spreadReservePx = spreadReserveMinHeightPx(deckInnerW, n);
-  const stackedCueTopPx = stackedCueTopForDeckSize(n, deckInnerW);
+  const spreadReservePx = spreadReserveMinHeightPx(deckInnerW, n, CARD_H);
+  const stackedCueTopPx = stackedCueTopForDeckSize(n, deckInnerW, CARD_H);
 
   useLayoutEffect(() => {
     dealDoneRef.current = false;
@@ -156,6 +159,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
   useLayoutEffect(() => {
     const measureDeck = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      setCardH(mobile ? 300 : 256);
       const el = deckRef.current;
       const w =
         el?.getBoundingClientRect().width ??
@@ -168,9 +174,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   }, []);
 
   useEffect(() => {
-    setCtaHidden(false);
-    setDealSettled(false);
-  }, [projects]);
+    setCtaHidden(isMobile);
+    setDealSettled(isMobile);
+  }, [projects, isMobile]);
 
   const onCardPointerEnter = () => {
     unlockUiAudio();
@@ -196,8 +202,8 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
     const applyStackTransforms = () => {
       const innerW = deck.getBoundingClientRect().width;
-      const { cw } = computeSpreadLayout(innerW, n);
-      const ay = deckAnchorCenterY();
+      const { cw } = computeSpreadLayout(innerW, n, CARD_H);
+      const ay = deckAnchorCenterY(CARD_H);
       projects.forEach((_, i) => {
         const el = cards[i];
         gsap.set(el, {
@@ -220,20 +226,21 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
     const applySettledTransforms = () => {
       const innerW = deck.getBoundingClientRect().width;
-      const { cw, finals } = computeSpreadLayout(innerW, n);
-      const ay = deckAnchorCenterY();
+      const { cw, finals } = computeSpreadLayout(innerW, n, CARD_H);
+      const ay = deckAnchorCenterY(CARD_H);
       projects.forEach((_, i) => {
         const el = cards[i];
         const f = finals[i];
         if (!f) return;
+        const settledOffset = isMobile ? 0 : i * STACK_STEP_Y;
         gsap.set(el, {
           marginLeft: -cw / 2,
           marginTop: -CARD_H / 2,
           top: ay,
           left: "50%",
           width: cw,
-          x: f.x + i * STACK_STEP_Y,
-          y: f.y + i * STACK_STEP_Y,
+          x: f.x + settledOffset,
+          y: f.y + settledOffset,
           rotation: 0,
           rotationY: 0,
           zIndex: 10 + i,
@@ -241,15 +248,22 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
       });
     };
 
-    applyStackTransforms();
-
-    let breatheTween: gsap.core.Tween | null = gsap.to(deck, {
-      y: 10,
-      duration: 2.9,
-      ease: "sine.inOut",
-      repeat: -1,
-      yoyo: true,
-    });
+    let breatheTween: gsap.core.Tween | null = null;
+    if (isMobile) {
+      applySettledTransforms();
+      dealDoneRef.current = true;
+      setCtaHidden(true);
+      setDealSettled(true);
+    } else {
+      applyStackTransforms();
+      breatheTween = gsap.to(deck, {
+        y: 10,
+        duration: 2.9,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
+    }
 
     let expandLayoutDelayed: gsap.core.Tween | null = null;
 
@@ -261,7 +275,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
       dealDoneRef.current = true;
 
       const innerW = deck.getBoundingClientRect().width;
-      const { finals } = computeSpreadLayout(innerW, n);
+      const { finals } = computeSpreadLayout(innerW, n, CARD_H);
 
       const stagger = staggerForDeckWidth(innerW);
       const moveDuration = 0.95;
@@ -302,7 +316,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
     const onResize = () => {
       ScrollTrigger.refresh();
-      if (!dealDoneRef.current) {
+      if (isMobile) {
+        applySettledTransforms();
+      } else if (!dealDoneRef.current) {
         applyStackTransforms();
       } else {
         applySettledTransforms();
@@ -318,7 +334,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
       gsap.killTweensOf(cards);
       gsap.killTweensOf(deck);
     };
-  }, [projects, n]);
+  }, [projects, n, CARD_H, isMobile]);
 
   useEffect(() => {
     ScrollTrigger.refresh();
@@ -404,11 +420,11 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                     </span>
                   </div>
 
-                  <h3 className="font-monument relative z-[1] mt-3 text-[clamp(1.05rem,calc(0.35rem+4.2vw),1.6rem)] leading-[1.12] text-white sm:mt-4">
+                  <h3 className="font-monument relative z-[1] mt-3 text-[clamp(0.95rem,calc(0.35rem+3.8vw),1.6rem)] leading-[1.12] text-white sm:mt-4">
                     {project.name}
                   </h3>
 
-                  <div className="relative z-[1] mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
+                  <div className="relative z-[1] mt-3 flex max-h-[2.8rem] flex-wrap gap-1.5 overflow-hidden sm:mt-4 sm:max-h-none sm:overflow-visible sm:gap-2">
                     {project.tech.map((item) => (
                       <span
                         key={item}
@@ -419,7 +435,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                     ))}
                   </div>
 
-                  <div className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-4 opacity-100 [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-[opacity,transform] [@media(hover:hover)]:duration-200 [@media(hover:hover)]:ease-out [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 sm:pt-5">
+                  <div className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-3 opacity-100 [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-[opacity,transform] [@media(hover:hover)]:duration-200 [@media(hover:hover)]:ease-out [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 sm:pt-4 lg:pt-5">
                     <p className="text-[0.82rem] leading-relaxed text-gray-400 sm:text-[0.85rem]">
                       {project.description}
                     </p>
@@ -436,7 +452,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
               </motion.article>
             ))}
 
-            {n > 0 && !ctaHidden ? (
+            {n > 0 && !ctaHidden && !isMobile ? (
               <div
                 className="pointer-events-none absolute inset-x-0 z-[30] flex justify-center pb-2"
                 style={{ top: stackedCueTopPx }}
