@@ -15,7 +15,6 @@ export type PreloaderProps = {
   extrasReady?: boolean;
 };
 
-const NAME = "AIMEN QAISER";
 const LINE1 = "AIMEN";
 const LINE2 = "QAISER";
 
@@ -146,7 +145,6 @@ export default function Preloader({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  const letters = (LINE1 + " " + LINE2).split("");
   const lastLetterIndex = LINE1.length + LINE2.length - 1;
   const scanDelayMs =
     lastLetterIndex * LETTER_STAGGER_S * 1000 +

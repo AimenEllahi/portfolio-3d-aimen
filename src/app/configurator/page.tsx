@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
 import Loader from "@/components/Loader";
