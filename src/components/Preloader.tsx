@@ -15,8 +15,6 @@ export type PreloaderProps = {
   extrasReady?: boolean;
 };
 
-const LINE1 = "AIMEN";
-const LINE2 = "QAISER";
 
 const letterEase = [0.16, 1, 0.3, 1] as const;
 const wipeEase = [0.76, 0, 0.24, 1] as const;
@@ -30,39 +28,9 @@ type IntroPhase = "aq-in" | "aq-wait" | "names";
 const AQ_ENTER_MS = 1100;
 const AQ_WAIT_MS = 700;
 const AQ_FLYOUT_MS = 1000;
-const LETTER_STAGGER_S = 0.07;
 const LETTER_DURATION_S = 0.9;
 const SCAN_DURATION_S = 1.4;
 const POST_SCAN_HOLD_MS = 350;
-
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: LETTER_STAGGER_S, delayChildren: 0 },
-  },
-  explode: {
-    transition: { staggerChildren: 0 },
-  },
-};
-
-const letterVariants = {
-  hidden: {
-    opacity: 0,
-    y: 72,
-    rotateX: -55,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    rotateX: 0,
-    transition: { duration: LETTER_DURATION_S, ease: letterEase },
-  },
-  explode: {
-    scale: 1.15,
-    opacity: 0,
-    transition: { duration: 0.6, ease: letterEase },
-  },
-};
 
 function FilmGrain() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -133,6 +101,10 @@ export default function Preloader({
   const [exitArmed, setExitArmed] = useState(false);
   const [wipeStarted, setWipeStarted] = useState(false);
   const [showScan, setShowScan] = useState(false);
+  const [aqLogoTarget, setAqLogoTarget] = useState<{ x: number; y: number }>({
+    x: 72,
+    y: 56,
+  });
   /** Becomes true once the scan-line has finished sweeping AND a small
    *  hold has elapsed. We refuse to start the exit wipe before this so
    *  the intro never gets cut off mid-animation. */
@@ -145,11 +117,8 @@ export default function Preloader({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  const lastLetterIndex = LINE1.length + LINE2.length - 1;
   const scanDelayMs =
-    lastLetterIndex * LETTER_STAGGER_S * 1000 +
-    LETTER_DURATION_S * 1000 +
-    50;
+    LETTER_DURATION_S * 1000 + 50;
 
   const p = Math.min(100, Math.max(0, progress));
   const showNameBlock = introPhase === "names";
@@ -214,6 +183,40 @@ export default function Preloader({
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncAqTarget = () => {
+      const candidates = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-nav-logo-anchor]"),
+      );
+      const visible = candidates.find((el) => el.offsetParent !== null);
+      if (!visible) return false;
+      const rect = visible.getBoundingClientRect();
+      if (!rect.width || !rect.height) return false;
+      setAqLogoTarget({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+      return true;
+    };
+
+    const run = () => {
+      if (cancelled) return;
+      const found = syncAqTarget();
+      if (!found) window.setTimeout(run, 120);
+    };
+
+    run();
+    window.addEventListener("resize", syncAqTarget, { passive: true });
+    window.addEventListener("orientationchange", syncAqTarget);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", syncAqTarget);
+      window.removeEventListener("orientationchange", syncAqTarget);
+    };
+  }, []);
+
   if (!mounted) return null;
 
   return (
@@ -234,11 +237,13 @@ export default function Preloader({
     >
       <FilmGrain />
 
+      {/* Hidden phase driver: preserves existing introPhase timing transitions
+          without rendering the AQ fly-in visually. */}
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed z-[1002] font-monument font-bold text-[var(--accent)]"
+        className="pointer-events-none fixed z-[1002] font-monument font-bold text-[var(--accent)] opacity-0"
         style={{
-          fontSize: "8rem",
+          fontSize: "1px",
           lineHeight: 1,
           transformOrigin: "center center",
         }}
@@ -254,10 +259,10 @@ export default function Preloader({
         animate={
           introPhase === "names"
             ? {
-                left: "max(1rem, calc((100vw - min(94vw, 72rem)) / 2 + 1rem))",
-                top: "clamp(2.5rem, 5.5vw, 3.5rem)",
-                x: 0,
-                y: 0,
+                left: aqLogoTarget.x,
+                top: aqLogoTarget.y,
+                x: "-50%",
+                y: "-50%",
                 scale: 0.19,
                 opacity: 0,
                 filter: "blur(0px)",
@@ -290,197 +295,127 @@ export default function Preloader({
         AQ
       </motion.div>
 
-      <div className="relative flex h-full w-full flex-col items-center justify-center px-4">
-        <div className="relative" style={{ perspective: 800 }}>
-          {showNameBlock && (
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 z-0 origin-center -translate-x-1/2 -translate-y-1/2"
-              style={{
-                width: 600,
-                height: 200,
-                background:
-                  "radial-gradient(ellipse at center, rgba(120, 80, 255, 0.12) 0%, transparent 70%)",
-              }}
-              initial={false}
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-0 px-4">
+        <div
+          className="relative flex items-center justify-center"
+          style={{
+            width: "clamp(280px, 50vw, 520px)",
+            height: "clamp(280px, 50vw, 520px)",
+          }}
+        >
+          <svg
+            className="absolute inset-0 h-full w-full"
+            viewBox="0 0 100 100"
+            fill="none"
+            style={{ transform: "rotate(-90deg)" }}
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="47"
+              stroke="rgba(110,240,200,0.16)"
+              strokeWidth="0.4"
+              fill="none"
+            />
+
+            <motion.circle
+              cx="50"
+              cy="50"
+              r="47"
+              stroke="rgba(110,240,200,0.95)"
+              strokeWidth="0.4"
+              fill="none"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 1 }}
               animate={
                 exitArmed
-                  ? { opacity: 0, scale: 1 }
-                  : {
-                      opacity: [0.4, 1],
-                      scale: [0.95, 1.05],
-                    }
+                  ? { pathLength: 1, opacity: [1, 1, 0] }
+                  : { pathLength: p / 100, opacity: 1 }
               }
               transition={
                 exitArmed
-                  ? { duration: 0.4, ease: "easeOut" }
-                  : {
-                      duration: 3,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatType: "reverse",
+                  ? {
+                      pathLength: { duration: 0.4, ease: "easeOut" },
+                      opacity: { duration: 0.4, times: [0, 0.55, 1], ease: "easeOut" },
                     }
+                  : { duration: 0.3, ease: "easeOut" }
               }
-            />
-          )}
-          {showNameBlock && (
-            <div className="relative z-10 flex flex-col items-center gap-1 sm:gap-2" style={{ transformStyle: "preserve-3d" }}>
-              {/* Line 1 */}
-              <motion.div
-                className="flex justify-center"
-                variants={containerVariants}
-                initial="hidden"
-                animate={exitArmed ? "explode" : "visible"}
-              >
-                {LINE1.split("").map((char, i) => (
-                  <motion.span
-                    key={`l1-${i}`}
-                    variants={letterVariants}
-                    className="inline-block select-none"
-                    style={{
-                      transformOrigin: "50% 50%",
-                      color: "#f5f0eb",
-                      fontSize: "clamp(1.9rem, 8.5vw, 9rem)",
-                      lineHeight: 1,
-                      fontFamily:
-                        "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
-                      fontWeight: 600,
-                      letterSpacing: "0.08em",
-                    }}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div>
-
-              {/* Line 2 */}
-              <motion.div
-                className="flex justify-center"
-                variants={containerVariants}
-                initial="hidden"
-                animate={exitArmed ? "explode" : "visible"}
-                transition={{ delayChildren: LINE1.length * LETTER_STAGGER_S }}
-              >
-                {LINE2.split("").map((char, i) => (
-                  <motion.span
-                    key={`l2-${i}`}
-                    variants={letterVariants}
-                    className="inline-block select-none"
-                    style={{
-                      transformOrigin: "50% 50%",
-                      color: "#f5f0eb",
-                      fontSize: "clamp(1.9rem, 8.5vw, 9rem)",
-                      lineHeight: 1,
-                      fontFamily:
-                        "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
-                      fontWeight: 600,
-                      letterSpacing: "0.08em",
-                    }}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div>
-            </div>
-          )}
-
-          {showNameBlock && showScan && !exitArmed && (
-            <motion.div
-              className="pointer-events-none absolute left-0 right-0 h-px"
               style={{
-                background:
-                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)",
-                boxShadow: "0 0 12px rgba(255,255,255,0.25)",
+                filter: "drop-shadow(0 0 4px rgba(110,240,200,0.55))",
               }}
-              initial={{ top: "-1px" }}
-              animate={{ top: "calc(100% - 1px)" }}
-              transition={{ duration: SCAN_DURATION_S, ease: "linear" }}
             />
-          )}
+
+            <motion.circle
+              cx="50"
+              cy="50"
+              r="44"
+              stroke="rgba(110,240,200,0.12)"
+              strokeWidth="0.3"
+              fill="none"
+              strokeDasharray="1 3"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 18, ease: "linear", repeat: Infinity }}
+              style={{ transformOrigin: "50px 50px" }}
+            />
+
+            <motion.circle
+              cx="50"
+              cy="50"
+              r="41"
+              stroke="rgba(110,240,200,0.2)"
+              strokeWidth="0.3"
+              fill="none"
+              strokeDasharray="0.5 4"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 25, ease: "linear", repeat: Infinity }}
+              style={{ transformOrigin: "50px 50px" }}
+            />
+
+            {[0, 90, 180, 270].map((angle) => (
+              <line
+                key={angle}
+                x1="50"
+                y1="3.5"
+                x2="50"
+                y2="6"
+                stroke="rgba(110,240,200,0.35)"
+                strokeWidth="0.4"
+                style={{
+                  transformOrigin: "50px 50px",
+                  transform: `rotate(${angle}deg)`,
+                }}
+              />
+            ))}
+          </svg>
+
+          <div className="relative z-10 flex flex-col items-center justify-center gap-0 text-center">
+            <motion.span
+              style={{
+                fontFamily: "monospace",
+                fontSize: "clamp(0.7rem, 1.5vw, 0.85rem)",
+                color: "rgba(110,240,200,0.45)",
+                letterSpacing: "0.2em",
+                marginBottom: "8px",
+                display: "block",
+                textAlign: "center",
+              }}
+              animate={{ opacity: exitArmed ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {String(Math.round(p)).padStart(3, "0")}
+            </motion.span>
+
+            {showNameBlock && (
+              <motion.div
+                className="my-1.5 h-px w-14 bg-[var(--accent)]/30"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: exitArmed ? 0 : 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
+            )}
+          </div>
         </div>
 
-        {showNameBlock && (
-          <motion.p
-            className="font-neue mt-10 text-center uppercase"
-            style={{
-              fontSize: "0.75rem",
-              letterSpacing: "0.3em",
-              color: "#f5f0eb",
-            }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: exitArmed ? 0 : 0.4,
-            }}
-            transition={
-              exitArmed
-                ? { duration: 0.35, ease: letterEase }
-                : { delay: 0.5, duration: 0.8, ease: letterEase }
-            }
-          >
-            Crafting Visual Stories
-          </motion.p>
-        )}
-      </div>
-
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[2]">
-        <div className="relative h-px w-full bg-neutral-800">
-          <motion.div
-            className="absolute left-0 top-0 h-full origin-left bg-white transition-[width] duration-200 ease-out"
-            style={{
-              width: `${exitArmed ? 100 : p}%`,
-              boxShadow:
-                exitArmed
-                  ? "0 0 20px rgba(255,255,255,1), 0 0 12px rgba(255,255,255,0.9)"
-                  : "0 0 8px rgba(255,255,255,0.85)",
-            }}
-            initial={false}
-            animate={
-              exitArmed
-                ? {
-                    opacity: [1, 1, 0],
-                    filter: [
-                      "brightness(1)",
-                      "brightness(2.4)",
-                      "brightness(0.3)",
-                    ],
-                  }
-                : { opacity: 1, filter: "brightness(1)" }
-            }
-            transition={
-              exitArmed
-                ? {
-                    opacity: { duration: 0.55, times: [0, 0.25, 1], ease: "easeInOut" },
-                    filter: { duration: 0.55, times: [0, 0.18, 1] },
-                  }
-                : { duration: 0.2, ease: "easeOut" }
-            }
-          />
-          <motion.div
-            className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-            style={{
-              left: `${exitArmed ? 100 : p}%`,
-              boxShadow: "0 0 8px white, 0 0 14px rgba(255,255,255,0.55)",
-            }}
-            initial={false}
-            animate={
-              exitArmed
-                ? {
-                    opacity: [1, 1, 0],
-                    scale: [1, 1.35, 0.5],
-                  }
-                : { opacity: 1, scale: 1 }
-            }
-            transition={
-              exitArmed
-                ? {
-                    duration: 0.55,
-                    times: [0, 0.22, 1],
-                    ease: "easeInOut",
-                  }
-                : { duration: 0.2, ease: "easeOut" }
-            }
-          />
-        </div>
       </div>
     </motion.div>
   );

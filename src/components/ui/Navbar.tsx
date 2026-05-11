@@ -89,6 +89,7 @@ export default function Navbar() {
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <button
             type="button"
+            data-nav-logo-anchor
             onClick={() => handleScrollTo("#home")}
             onPointerEnter={navHoverFeedback}
             className="font-monument text-xl font-bold text-[var(--accent)]"
@@ -132,6 +133,7 @@ export default function Navbar() {
         <nav className="mx-auto flex h-14 w-full items-center justify-between px-4 sm:h-16 sm:px-6">
           <button
             type="button"
+            data-nav-logo-anchor
             onClick={() => handleScrollTo("#home")}
             onPointerEnter={navHoverFeedback}
             className="font-monument text-lg font-bold text-[var(--accent)] sm:text-xl"

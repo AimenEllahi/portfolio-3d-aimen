@@ -81,7 +81,7 @@ export default function HeroSection({
   const sectionRef = useRef<HTMLElement>(null);
   const pinWrapRef = useRef<HTMLDivElement>(null);
   const backdropBlurLayerRef = useRef<HTMLDivElement>(null);
-  const maskLayerRef = useRef<HTMLDivElement>(null);
+  const maskLayerRef = useRef<SVGRectElement>(null);
   const textGroupRef = useRef<SVGGElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
   const measureLine1Ref = useRef<SVGTextElement>(null);
@@ -142,6 +142,7 @@ export default function HeroSection({
     const svg = svgMaskRootRef.current;
     const rect = maskWhiteRectRef.current;
     const maskEl = maskElementRef.current;
+    const maskRect = maskLayerRef.current;
     const t1 = textLine1Ref.current;
     const t2 = textLine2Ref.current;
     if (!svg || !rect || !maskEl) return;
@@ -153,6 +154,10 @@ export default function HeroSection({
 
     maskEl.setAttribute("width", String(w));
     maskEl.setAttribute("height", String(h));
+    if (maskRect) {
+      maskRect.setAttribute("width", String(w));
+      maskRect.setAttribute("height", String(h));
+    }
 
     rect.setAttribute("width", String(w));
     rect.setAttribute("height", String(h));
@@ -175,15 +180,25 @@ export default function HeroSection({
 
   const measureAndPrepareFonts = useCallback(async () => {
     await document.fonts.ready.catch(() => undefined);
-    const t1 = measureLine1Ref.current;
-    const t2 = measureLine2Ref.current;
-    if (!t1 || !t2) return;
     try {
-      const w1 = t1.getComputedTextLength();
-      const w2 = t2.getComputedTextLength();
+      let attempts = 0;
+      let w1 = 0;
+      let w2 = 0;
+      while (attempts < 15) {
+        const t1 = measureLine1Ref.current;
+        const t2 = measureLine2Ref.current;
+        if (t1 && t2) {
+          w1 = t1.getComputedTextLength();
+          w2 = t2.getComputedTextLength();
+          if (w1 > 0 && w2 > 0) break;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 100));
+        attempts += 1;
+      }
       const maxW = Math.max(w1, w2);
       if (maxW <= 0) {
-        setFontPx(120);
+        const iw = window.innerWidth;
+        setFontPx(Math.round(iw * 0.21));
         setFontsReady(true);
         return;
       }
@@ -259,6 +274,7 @@ export default function HeroSection({
         );
         ScrollTrigger.refresh();
         lenisRef.current?.resize();
+        window.setTimeout(() => ScrollTrigger.refresh(), 100);
       });
     };
     window.addEventListener("resize", onResize, { passive: true });
@@ -352,17 +368,18 @@ export default function HeroSection({
           overlayOpacity = Math.max(0, 1 - stepped);
         }
         maskLayer.style.opacity = String(overlayOpacity);
-        maskLayer.style.visibility =
-          overlayOpacity <= 0.002 ? "hidden" : "visible";
-        maskLayer.style.pointerEvents =
-          overlayOpacity <= 0 ? "none" : "auto";
+        if (overlayOpacity <= 0.002) {
+          maskLayer.setAttribute("visibility", "hidden");
+        } else {
+          maskLayer.setAttribute("visibility", "visible");
+        }
       }
 
       const hintAlpha = p < 0.08 ? 1 - p / 0.08 : 0;
       scrollHint.style.opacity = Math.max(0, hintAlpha).toFixed(3);
 
       const blurBackdrop = backdropBlurLayerRef.current;
-      if (blurBackdrop) {
+      if (blurBackdrop && window.innerWidth >= 768) {
         const reveal = gsap.utils.clamp(0, 1, p / 0.86);
         const easedReveal = gsap.parseEase("power2.out")(reveal);
         const blurPx = 28 * Math.pow(1 - easedReveal, 1.25);
@@ -374,6 +391,9 @@ export default function HeroSection({
           blurBackdrop.style.backdropFilter = bf;
           blurBackdrop.style.setProperty("-webkit-backdrop-filter", bf);
         }
+      } else if (blurBackdrop) {
+        blurBackdrop.style.backdropFilter = "none";
+        blurBackdrop.style.setProperty("-webkit-backdrop-filter", "none");
       }
     };
 
@@ -425,7 +445,16 @@ export default function HeroSection({
     >
       <svg
         aria-hidden
-        className="pointer-events-none  absolute h-px w-px overflow-hidden opacity-0"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "-9999px",
+          width: "2000px",
+          height: "200px",
+          opacity: 0,
+          pointerEvents: "none",
+          overflow: "visible",
+        }}
       >
         <text
           ref={measureLine1Ref}
@@ -460,31 +489,15 @@ export default function HeroSection({
           className="pointer-events-none absolute inset-0 z-0"
           aria-hidden
         />
-        {/* Pinned by ScrollTrigger: scroll drives zoom — layout stays fixed */}
-        <div
-          ref={maskLayerRef}
-          className="hero-stencil-overlay absolute inset-0 z-[1] bg-black"
-          style={{
-            willChange: "transform, opacity",
-            WebkitMaskImage: `url(#${maskId})`,
-            maskImage: `url(#${maskId})`,
-            WebkitMaskSize: "100% 100%",
-            maskSize: "100% 100%",
-            WebkitMaskRepeat: "no-repeat",
-            maskRepeat: "no-repeat",
-            WebkitMaskPosition: "0 0",
-            maskPosition: "0 0",
-          }}
-        />
-
         <svg
           ref={svgMaskRootRef}
-          className="pointer-events-none absolute inset-0 z-[2] h-full w-full max-w-none [&_defs]:pointer-events-none"
+          className="pointer-events-none absolute inset-0 z-[1]"
           style={{
             width: "100%",
             height: "100%",
             display: "block",
             maxWidth: "none",
+            willChange: "opacity",
           }}
           aria-hidden
           width={typeof window !== "undefined" ? window.innerWidth : 1920}
@@ -569,6 +582,16 @@ export default function HeroSection({
               </g>
             </mask>
           </defs>
+          <rect
+            ref={maskLayerRef}
+            x={0}
+            y={0}
+            width={typeof window !== "undefined" ? window.innerWidth : 1920}
+            height={typeof window !== "undefined" ? window.innerHeight : 1080}
+            fill="black"
+            mask={`url(#${maskId})`}
+            style={{ willChange: "opacity" }}
+          />
         </svg>
 
         <div
