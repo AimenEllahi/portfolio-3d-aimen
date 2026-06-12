@@ -102,8 +102,6 @@ export default function HeroSection({
   });
 
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
-  const introOpacityLockRef = useRef(true);
-  const introRanRef = useRef(false);
 
   const [fontsReady, setFontsReady] = useState(false);
   const [fontPx, setFontPx] = useState(0);
@@ -237,11 +235,6 @@ export default function HeroSection({
   }, [fontsReady, fontPx, syncSvgMaskGeometry]);
 
   useLayoutEffect(() => {
-    const el = maskLayerRef.current;
-    if (el) el.style.opacity = "0";
-  }, []);
-
-  useLayoutEffect(() => {
     maskElementRef.current?.setAttribute("mask-type", "luminance");
   }, []);
 
@@ -281,48 +274,6 @@ export default function HeroSection({
     return () => window.removeEventListener("resize", onResize);
   }, [fontsReady, fontPx, measureAndPrepareFonts, syncSvgMaskGeometry]);
 
-  /* ── Entrance: black mask fades in after preloader ── */
-  useEffect(() => {
-    const fallbackMs = 2600;
-    let fallbackId: number | null = null;
-
-    const startIntro = () => {
-      if (introRanRef.current) return;
-      const el = maskLayerRef.current;
-      if (!el) return;
-      introRanRef.current = true;
-      if (fallbackId != null) {
-        window.clearTimeout(fallbackId);
-        fallbackId = null;
-      }
-      el.style.transition =
-        "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s";
-      window.requestAnimationFrame(() => {
-        el.style.opacity = "1";
-      });
-      window.setTimeout(() => {
-        introOpacityLockRef.current = false;
-      }, 300 + 1200 + 80);
-    };
-
-    const w = window as Window & { __heroPreloaderComplete?: boolean };
-    if (w.__heroPreloaderComplete) {
-      requestAnimationFrame(() => startIntro());
-    }
-
-    window.addEventListener("hero-preloader-complete", startIntro);
-
-    fallbackId = window.setTimeout(() => {
-      fallbackId = null;
-      startIntro();
-    }, fallbackMs);
-
-    return () => {
-      window.removeEventListener("hero-preloader-complete", startIntro);
-      if (fallbackId != null) window.clearTimeout(fallbackId);
-    };
-  }, []);
-
   useEffect(() => {
     if (!lenis) return;
     ScrollTrigger.refresh();
@@ -349,30 +300,25 @@ export default function HeroSection({
         `translate(${cx}, ${cy}) scale(${scale}) translate(${-cx}, ${-cy})`,
       );
 
-      if (!introOpacityLockRef.current) {
-        maskLayer.style.transition = "";
-        /* Stencil fades early so WebGL dome + fog read clearly through clears */
-        const fadeStart = 0.38;
-        const fadeEnd = 0.42;
-        let overlayOpacity = 1;
-        if (p > fadeStart) {
-          const span = fadeEnd - fadeStart;
-          const t =
-            span <= 0
-              ? 1
-              : Math.min(
-                  1,
-                  Math.max(0, (p - fadeStart) / span),
-                );
-          const stepped = gsap.parseEase("expo.in")(t);
-          overlayOpacity = Math.max(0, 1 - stepped);
-        }
-        maskLayer.style.opacity = String(overlayOpacity);
-        if (overlayOpacity <= 0.002) {
-          maskLayer.setAttribute("visibility", "hidden");
-        } else {
-          maskLayer.setAttribute("visibility", "visible");
-        }
+      maskLayer.style.transition = "";
+      /* Stencil fades early so WebGL dome + fog read clearly through clears */
+      const fadeStart = 0.38;
+      const fadeEnd = 0.42;
+      let overlayOpacity = 1;
+      if (p > fadeStart) {
+        const span = fadeEnd - fadeStart;
+        const t =
+          span <= 0
+            ? 1
+            : Math.min(1, Math.max(0, (p - fadeStart) / span));
+        const stepped = gsap.parseEase("expo.in")(t);
+        overlayOpacity = Math.max(0, 1 - stepped);
+      }
+      maskLayer.style.opacity = String(overlayOpacity);
+      if (overlayOpacity <= 0.002) {
+        maskLayer.setAttribute("visibility", "hidden");
+      } else {
+        maskLayer.setAttribute("visibility", "visible");
       }
 
       const hintAlpha = p < 0.08 ? 1 - p / 0.08 : 0;

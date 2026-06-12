@@ -1,9 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
 import CustomCursor from "@/components/CustomCursor";
-import Preloader from "@/components/Preloader";
 import AboutSection from "@/components/ui/AboutSection";
 import ContactSection from "@/components/ui/ContactSection";
 import Navigation from "@/components/ui/Navbar";
@@ -43,6 +41,16 @@ const PROJECTS_DATA: ProjectCard[] = [
     href: "https://landau-alure-232.vercel.app/Island",
   },
   {
+    name: "Sticker Configurator",
+    tech: ["Next.js", "Canvas", "Firebase"],
+    description:
+      "Upload, edit, price, and checkout custom die-cut stickers with AI background removal.",
+    tag: "E-Commerce",
+    tagClass:
+      "border border-[var(--border-hover)] bg-[var(--accent-ghost)] text-[var(--accent)]",
+    href: "https://graphics-producer-sticker-configurator.vercel.app/",
+  },
+  {
     name: "TaskBoard Pro",
     tech: ["Angular", "Tailwind"],
     description: "Sprint dashboards, filters, and responsive task grids.",
@@ -63,93 +71,18 @@ const HeroSection = dynamic(() => import("@/components/HeroSection"), {
     <section
       className="relative min-h-[100dvh] w-full bg-black"
       aria-hidden
-    >
-      <div className="sticky top-0 flex h-[100dvh] w-full items-center justify-center overflow-hidden">
-        <p className="font-neue text-xs uppercase tracking-[0.35em] text-white/35">
-          Loading
-        </p>
-      </div>
-    </section>
+    />
   ),
 });
 
-/** First paint stabilised — replaces video metadata preload for progress bar */
-function layoutPaintReady(): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve());
-    });
-  });
-}
-
 export default function Home() {
-  const [baselineProgress, setBaselineProgress] = useState(0);
-  const [heroReady, setHeroReady] = useState(false);
-  const [sceneReady, setSceneReady] = useState(false);
-  const [showPreloader, setShowPreloader] = useState(true);
-
-  const progress = useMemo(
-    () =>
-      Math.min(
-        100,
-        Math.round(
-          baselineProgress * 0.7 + (heroReady ? 15 : 0) + (sceneReady ? 15 : 0),
-        ),
-      ),
-    [baselineProgress, heroReady, sceneReady],
-  );
-
-  const extrasReady = heroReady && sceneReady;
-
-  useEffect(() => {
-    const failSafe = window.setTimeout(() => {
-      setHeroReady(true);
-      setSceneReady(true);
-    }, 12000);
-    return () => window.clearTimeout(failSafe);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    let completed = 0;
-    const total = 3;
-
-    const bump = () => {
-      if (cancelled) return;
-      completed += 1;
-      setBaselineProgress(Math.min(100, (completed / total) * 100));
-    };
-
-    void Promise.all([
-      document.fonts.ready.then(() => bump()).catch(() => bump()),
-      layoutPaintReady().then(() => bump()),
-      new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 2000);
-      }).then(() => bump()),
-    ]).finally(() => {
-      if (!cancelled) setBaselineProgress(100);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <>
-      {showPreloader ? (
-        <Preloader
-          progress={progress}
-          extrasReady={extrasReady}
-          onComplete={() => setShowPreloader(false)}
-        />
-      ) : null}
-      <Scene onReady={() => setSceneReady(true)} />
+      <Scene />
       <main className="relative z-10 bg-transparent">
         <Navigation />
         <CustomCursor />
-        <HeroSection sectionId="home" onHeroReady={() => setHeroReady(true)} />
+        <HeroSection sectionId="home" />
         <MarqueeStrip />
         <ProjectsSection projects={PROJECTS_DATA} />
         <CarConfiguratorDemoSection />
