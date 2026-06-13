@@ -7,45 +7,71 @@ import MagneticButton from "@/components/MagneticButton";
 
 const SKILLS = [
   {
-    label: "3D / WebGL",
-    items: ["Three.js", "React Three Fiber", "WebGL", "GSAP"],
+    label: "Languages",
+    items: ["JavaScript", "TypeScript", "CSS3", "Python"],
     className:
       "border-[rgba(110,240,200,0.25)] bg-[var(--accent-ghost)] text-[var(--accent)]",
   },
   {
-    label: "Frontend",
-    items: ["React", "Next.js", "TypeScript", "Tailwind"],
+    label: "Frameworks",
+    items: [
+      "React",
+      "Next.js",
+      "Angular",
+      "Three.js",
+      "React Three Fiber",
+      "GSAP",
+      "Tailwind CSS",
+      "Radix UI",
+    ],
     className:
       "border-[rgba(139,92,246,0.25)] bg-[rgba(139,92,246,0.12)] text-[#c4b5fd]",
   },
   {
-    label: "Backend",
-    items: ["Node.js", "Python", "REST APIs"],
+    label: "State & Data",
+    items: ["Zustand", "React Query", "Axios", "REST APIs", "Socket.io"],
     className: "border-emerald-300/30 bg-emerald-400/15 text-emerald-200",
+  },
+  {
+    label: "Cloud, Tools & Testing",
+    items: [
+      "AWS",
+      "Docker",
+      "CI/CD",
+      "Git",
+      "Vite",
+      "Jest",
+      "Playwright",
+      "Agile/Scrum",
+    ],
+    className: "border-amber-300/30 bg-amber-400/15 text-amber-200",
   },
 ];
 
 const TIMELINE = [
   {
-    company: "Think3DDD",
+    company: "Think3DDD GbR",
     role: "3D Software Engineering Intern",
     year: "2026",
+    location: "Berlin · Remote",
     desc:
-      "Medical 3D visualisation using Three.js and WebGL for surgical planning and diagnostic tools.",
+      "Extended a Three.js medical editor with Raycaster picking and region labeling, connected the frontend to a FastAPI session API with GLTF previews, and delivered Python geometry services across 20+ REST endpoints.",
   },
   {
     company: "SAP",
-    role: "JavaScript Developer",
+    role: "Working Student, JavaScript Developer",
     year: "2025",
+    location: "Walldorf, Germany",
     desc:
-      "Built internal tooling and UI components for enterprise-scale products used by global teams.",
+      "Automated end-to-end tests with qMATE and Mocha for SAP's Access Certification module (SAPUI5), using Page Object Model patterns and CI/CD integration that improved deployment efficiency by 10%.",
   },
   {
-    company: "DNDAI",
-    role: "Lead Frontend Engineer",
-    year: "2024",
+    company: "Freelance",
+    role: "Frontend / Full-Stack Developer",
+    year: "2022–2024",
+    location: "Remote",
     desc:
-      "Architected and shipped the entire frontend serving 10,000+ active users worldwide.",
+      "Delivered 100+ client web applications with React, Next.js, and Three.js, plus full-stack workflows using Node.js, Express, Firebase, and MongoDB.",
   },
 ];
 
@@ -54,19 +80,19 @@ const STATS = [
     number: "3",
     suffix: "+",
     label: "Years experience",
-    desc: "Building production 3D web applications",
+    desc: "Building production web and 3D applications",
   },
   {
     number: "10",
     suffix: "k",
     label: "Users served",
-    desc: "At DNDAI as Lead Frontend Engineer",
+    desc: "On the DNDAI platform frontend",
   },
   {
-    number: "4",
-    suffix: "",
-    label: "Live projects",
-    desc: "Shipped and currently in production",
+    number: "100",
+    suffix: "+",
+    label: "Client projects",
+    desc: "Delivered as a freelance developer",
   },
 ];
 
@@ -236,7 +262,7 @@ export default function AboutSection() {
               transition={{ duration: 0.65, ease: EASE, delay: 0.1 }}
               className="text-[10px] uppercase tracking-[0.18em] text-[var(--accent)]"
             >
-              Frontend Engineer · Berlin
+              Frontend Engineer · Saarbrücken
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 40 }}
@@ -254,10 +280,12 @@ export default function AboutSection() {
               transition={{ duration: 0.75, ease: EASE, delay: 0.3 }}
               className="mt-4 max-w-[480px] text-base leading-[1.7] text-[var(--muted)]"
             >
-              Frontend Engineer with 3+ years building high-performance 3D web
-              applications. Currently pursuing MSc Media Informatics at Saarland
-              University and interning at Think3DDD in Berlin doing medical 3D
-              visualisation.
+              Frontend Engineer with 3+ years building web applications with
+              React, TypeScript, and Three.js. Built the frontend for DNDAI, a
+              live platform used by 10,000+ users, and worked on enterprise test
+              automation at SAP. Currently developing 3D medical visualization at
+              Think3DDD while pursuing MSc Media Informatics at Saarland
+              University.
             </motion.p>
 
             <motion.div
@@ -390,7 +418,7 @@ export default function AboutSection() {
                       {item.role}
                     </p>
                     <p className="mt-[3px] text-[13px] text-[var(--muted)]">
-                      {item.company} · {item.year === "2026" ? "Berlin" : "Remote"}
+                      {item.company} · {item.location}
                     </p>
                     <p className="mt-[6px] text-[13px] leading-[1.6] text-[var(--subtle)]">
                       {item.desc}
