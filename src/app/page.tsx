@@ -9,6 +9,8 @@ import ProjectsSection, { type ProjectCard } from "@/components/ui/ProjectsSecti
 import CarConfiguratorDemoSection from "@/components/ui/CarConfiguratorDemoSection";
 import MarqueeStrip from "@/components/ui/MarqueeStrip";
 import VoronoiShaderSection from "@/components/ui/VoronoiShaderSection";
+import ChatComingSoon from "@/components/chat/ChatComingSoon";
+
 
 const PROJECTS_DATA: ProjectCard[] = [
   {
@@ -80,6 +82,7 @@ export default function Home() {
     <>
       <Scene />
       <main className="relative z-10 bg-transparent">
+        <ChatComingSoon />
         <Navigation />
         <CustomCursor />
         <HeroSection sectionId="home" />
