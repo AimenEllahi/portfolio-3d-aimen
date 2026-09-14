@@ -61,6 +61,16 @@ const PROJECTS_DATA: ProjectCard[] = [
       "border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.1)] text-[var(--amber)]",
     href: "https://angular-project-ashy.vercel.app/dashboard",
   },
+  {
+    name: "UdS EduTech Research Platform",
+    tech: ["Next.js", "React", "Tailwind"],
+    description:
+      "Web platform built as a Research Assistant for the EduTech group at Saarland University.",
+    tag: "Full Stack",
+    tagClass:
+      "border border-[var(--border-hover)] bg-[var(--accent-ghost)] text-[var(--accent)]",
+    href: "https://edutech.uni-saarland.de/",
+  },
 ];
 
 const Scene = dynamic(() => import("@/components/scene/Scene"), {
