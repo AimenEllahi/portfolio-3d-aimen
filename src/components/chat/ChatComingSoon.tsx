@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCursor } from "../CustomCursor";
-import { div } from "framer-motion/client";
 
 
 export default function ChatComingSoon() {
