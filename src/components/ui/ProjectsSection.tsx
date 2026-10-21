@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -143,6 +143,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const [ctaHidden, setCtaHidden] = useState(false);
   /** True after GSAP deal motion settles — hover uses full “hover” chime; stacked uses softer pulse. */
   const [dealSettled, setDealSettled] = useState(false);
+  const reduceMotion = useReducedMotion();
   const n = projects.length;
   // SSR-safe defaults: avoid window-based initial values to prevent hydration mismatch.
   const [deckInnerW, setDeckInnerW] = useState(SECTION_MAX_INNER);
@@ -174,9 +175,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   }, []);
 
   useEffect(() => {
-    setCtaHidden(isMobile);
-    setDealSettled(isMobile);
-  }, [projects, isMobile]);
+    setCtaHidden(isMobile || !!reduceMotion);
+    setDealSettled(isMobile || !!reduceMotion);
+  }, [projects, isMobile, reduceMotion]);
 
   const onCardPointerEnter = () => {
     unlockUiAudio();
@@ -249,7 +250,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
     };
 
     let breatheTween: gsap.core.Tween | null = null;
-    if (isMobile) {
+    if (isMobile || reduceMotion) {
       applySettledTransforms();
       dealDoneRef.current = true;
       setCtaHidden(true);
@@ -316,7 +317,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
 
     const onResize = () => {
       ScrollTrigger.refresh();
-      if (isMobile) {
+      if (isMobile || reduceMotion) {
         applySettledTransforms();
       } else if (!dealDoneRef.current) {
         applyStackTransforms();
@@ -334,7 +335,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
       gsap.killTweensOf(cards);
       gsap.killTweensOf(deck);
     };
-  }, [projects, n, CARD_H, isMobile]);
+  }, [projects, n, CARD_H, isMobile, reduceMotion]);
 
   useEffect(() => {
     ScrollTrigger.refresh();
@@ -347,7 +348,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   return (
     <section
       id="projects"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur-[2px]"
+      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]"
       style={{ perspective: "1200px" }}
     >
       <div className="mx-auto flex w-full max-w-[1104px] flex-col px-4 pt-12 pb-20 sm:px-6 sm:pt-14 sm:pb-24 lg:pt-16 lg:pb-28">
@@ -435,12 +436,13 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                     ))}
                   </div>
 
-                  <div className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-3 opacity-100 [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-[opacity,transform] [@media(hover:hover)]:duration-200 [@media(hover:hover)]:ease-out [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 sm:pt-4 lg:pt-5">
+                  <div className="relative z-[1] mt-auto flex flex-col gap-2 pb-1 pt-3 opacity-100 [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-[opacity,transform] [@media(hover:hover)]:duration-200 [@media(hover:hover)]:ease-out [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 [@media(hover:hover)]:group-focus-within/card:translate-y-0 [@media(hover:hover)]:group-focus-within/card:opacity-100 sm:pt-4 lg:pt-5">
                     <p className="text-[0.82rem] leading-relaxed text-gray-400 sm:text-[0.85rem]">
                       {project.description}
                     </p>
                     <a
                       href={project.href}
+                      tabIndex={!isMobile && !dealSettled && i > 0 ? -1 : 0}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[0.85rem] font-medium text-[var(--accent)] hover:text-[var(--accent-dim)] sm:text-[0.9rem]"

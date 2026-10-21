@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import MagneticButton from "@/components/MagneticButton";
 import { useLenis } from "@/components/SmoothScrollProvider";
@@ -8,7 +8,7 @@ import {
   playUiSound,
   unlockUiAudio,
 } from "@/lib/uiAudio";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
   { label: "Home", target: "#home" },
@@ -20,10 +20,11 @@ const NAV_LINKS = [
 export default function Navbar() {
   const lenis = useLenis();
   const pathname = usePathname();
-  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showBorder, setShowBorder] = useState(false);
   const lastNavHoverSoundRef = useRef(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const navHoverFeedback = () => {
     unlockUiAudio();
@@ -43,38 +44,52 @@ export default function Navbar() {
   useEffect(() => {
     if (!isMenuOpen) return;
     const prevOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
     document.body.style.overflow = "hidden";
+    menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsMenuOpen(false);
+      if (e.key !== "Tab") return;
+      const controls = menuRef.current?.querySelectorAll<HTMLElement>("a, button");
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
+      menuButton?.focus();
     };
   }, [isMenuOpen]);
 
-  const handleScrollTo = (target: string) => {
+  const handleScrollTo = (target: string, event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     unlockUiAudio();
     playUiSound("click");
-
     if (pathname !== "/") {
-      router.push(`/${target}`);
       setIsMenuOpen(false);
       return;
     }
-
+    event.preventDefault();
     const section = document.querySelector(target);
     if (!section) {
       window.location.hash = target;
       setIsMenuOpen(false);
       return;
     }
-
+    history.pushState(null, "", target);
     if (lenis) {
-      lenis.scrollTo(target);
+      lenis.scrollTo(target, { immediate: window.matchMedia("(prefers-reduced-motion: reduce)").matches });
     } else {
-      section.scrollIntoView({ behavior: "smooth" });
+      section.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     }
     setIsMenuOpen(false);
   };
@@ -87,40 +102,40 @@ export default function Navbar() {
         }`}
       >
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-          <button
-            type="button"
+          <a
+            href="/#home"
             data-nav-logo-anchor
-            onClick={() => handleScrollTo("#home")}
+            onClick={(event) => handleScrollTo("#home", event)}
             onPointerEnter={navHoverFeedback}
             className="font-monument text-xl font-bold text-[var(--accent)]"
           >
             AQ
-          </button>
+          </a>
 
           <div className="flex items-center gap-8 text-sm text-white/80">
             {NAV_LINKS.map((link) => (
               <MagneticButton key={link.label} strength={0.3}>
-                <button
-                  type="button"
-                  onClick={() => handleScrollTo(link.target)}
+                <a
+                  href={`/${link.target}`}
+                  onClick={(event) => handleScrollTo(link.target, event)}
                   onPointerEnter={navHoverFeedback}
                   className="transition-colors hover:text-white"
                 >
                   {link.label}
-                </button>
+                </a>
               </MagneticButton>
             ))}
           </div>
 
           <MagneticButton strength={0.5}>
-            <button
-              type="button"
-              onClick={() => handleScrollTo("#contact")}
+            <a
+              href="/#contact"
+              onClick={(event) => handleScrollTo("#contact", event)}
               onPointerEnter={navHoverFeedback}
               className="rounded-full border border-[var(--accent)] px-4 py-2 text-sm font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--bg)]"
             >
               Let&apos;s Talk
-            </button>
+            </a>
           </MagneticButton>
         </nav>
       </header>
@@ -131,17 +146,18 @@ export default function Navbar() {
         }`}
       >
         <nav className="mx-auto flex h-14 w-full items-center justify-between px-4 sm:h-16 sm:px-6">
-          <button
-            type="button"
+          <a
+            href="/#home"
             data-nav-logo-anchor
-            onClick={() => handleScrollTo("#home")}
+            onClick={(event) => handleScrollTo("#home", event)}
             onPointerEnter={navHoverFeedback}
             className="font-monument text-lg font-bold text-[var(--accent)] sm:text-xl"
           >
             AQ
-          </button>
+          </a>
 
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             className="inline-flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1.5"
@@ -158,6 +174,10 @@ export default function Navbar() {
       <AnimatePresence>
         {isMenuOpen ? (
           <motion.div
+            ref={menuRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
             key="mobile-menu"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -192,10 +212,10 @@ export default function Navbar() {
             </button>
 
             {NAV_LINKS.map((link, i) => (
-              <motion.button
+              <motion.a
                 key={link.label}
-                type="button"
-                onClick={() => handleScrollTo(link.target)}
+                href={`/${link.target}`}
+                onClick={(event) => handleScrollTo(link.target, event)}
                 onPointerEnter={navHoverFeedback}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -208,12 +228,12 @@ export default function Navbar() {
                 style={{ touchAction: "manipulation" }}
               >
                 {link.label}
-              </motion.button>
+              </motion.a>
             ))}
 
-            <motion.button
-              type="button"
-              onClick={() => handleScrollTo("#contact")}
+            <motion.a
+              href="/#contact"
+              onClick={(event) => handleScrollTo("#contact", event)}
               onPointerEnter={navHoverFeedback}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -226,7 +246,7 @@ export default function Navbar() {
               style={{ touchAction: "manipulation" }}
             >
               Let&apos;s Talk
-            </motion.button>
+            </motion.a>
           </motion.div>
         ) : null}
       </AnimatePresence>

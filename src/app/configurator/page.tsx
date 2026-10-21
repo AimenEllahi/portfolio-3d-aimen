@@ -3,7 +3,6 @@
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
-import Loader from "@/components/Loader";
 import Navbar from "@/components/ui/Navbar";
 import { CarPart } from "@/components/CarModel";
 import {
@@ -90,8 +89,9 @@ export default function ConfiguratorPage() {
     resetColors,
   } = useConfiguratorStore();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [showPalette, setShowPalette] = useState(false);
+  const [showPaletteHint, setShowPaletteHint] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
   const pageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -132,22 +132,11 @@ export default function ConfiguratorPage() {
     );
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
   // local UI state
 
   const handlePartSelect = (part: ConfigurablePart) => {
     setSelectedPart(part);
     setActivePanel("colors");
-    gsap.fromTo(
-      ".color-grid",
-      { opacity: 0.5, y: 10 },
-      { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
-    );
   };
 
   const handleColorChange = (color: string) => {
@@ -198,6 +187,19 @@ export default function ConfiguratorPage() {
     );
   };
 
+  const handleSaveBuild = () => {
+    const file = new Blob([JSON.stringify({ name: "Car Configurator Build", colors: partColors }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "car-build.json";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setSaveMessage("Build downloaded as car-build.json");
+  };
+
+  const quoteHref = `mailto:aimenqaiser2000@gmail.com?subject=${encodeURIComponent("Car configurator quote request")}&body=${encodeURIComponent(`Hello Aimen,\n\nI'd like to discuss this car build:\n${partConfigs.map((part) => `${part.name}: ${colorOptions.find((color) => color.value === partColors[part.id])?.name ?? partColors[part.id]}`).join("\n")}\n\nMy project details:\n`)}`;
+
   // Palette toggle handlers (floating palette)
   const togglePalette = () => setShowPalette((s) => !s);
 
@@ -214,8 +216,9 @@ export default function ConfiguratorPage() {
   const currentPartConfig = partConfigs.find((p) => p.id === selectedPart);
 
   return (
-    <div
+    <main
       ref={pageRef}
+      id="main-content"
       className="min-h-dvh bg-[var(--bg)] text-[var(--fg)] lg:min-h-screen lg:py-20"
     >
       <Navbar />
@@ -246,7 +249,6 @@ export default function ConfiguratorPage() {
             ref={viewerRef}
             className="relative h-[52vh] min-h-[260px] max-h-[420px] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] sm:max-h-[520px] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:max-h-none lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
           >
-            {isLoading && <Loader />}
             <CarConfiguratorScene
               colors={partColors}
               selectedPart={selectedPart}
@@ -270,13 +272,8 @@ export default function ConfiguratorPage() {
                       );
                     }
                     // show a temporary tooltip
-                    const tip = document.createElement("div");
-                    tip.textContent = "Select a part first";
-                    tip.className = "pointer-events-none absolute -top-12 right-0 rounded-full bg-black/70 px-3 py-1 text-xs text-white/90";
-                    const container = document.createElement("div");
-                    container.style.position = "relative";
-                    document.body.appendChild(tip);
-                    setTimeout(() => tip.remove(), 1500);
+                    setShowPaletteHint(true);
+                    window.setTimeout(() => setShowPaletteHint(false), 2000);
                     return;
                   }
                   togglePalette();
@@ -285,9 +282,11 @@ export default function ConfiguratorPage() {
                   selectedPart ? "bg-[var(--accent)]/95" : "bg-[var(--accent)]/40"
                 }`}
                 title={selectedPart ? "Open color palette" : "Select a part first"}
+                aria-label={selectedPart ? "Open color palette" : "Select a part before opening colors"}
               >
                 <span className="text-xl">🎨</span>
               </button>
+              {showPaletteHint ? <span role="status" className="absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-full bg-black/85 px-3 py-1.5 text-xs text-white">Select a part first</span> : null}
             </div>
 
             {/* Floating palette overlay */}
@@ -557,9 +556,7 @@ export default function ConfiguratorPage() {
               </div>
 
               <div className="space-y-3">
-                <button className="w-full py-4 bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] text-[var(--bg)] font-semibold rounded-xl hover:shadow-lg hover:shadow-[var(--accent)]/25 transition-all duration-300 hover:scale-[1.02]">
-                  Request Quote
-                </button>
+                <a href={quoteHref} className="block w-full rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] py-4 text-center font-semibold text-[var(--bg)] transition-[box-shadow,transform] duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[var(--accent)]/25">Email Build for Quote</a>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={handleResetColors}
@@ -567,10 +564,11 @@ export default function ConfiguratorPage() {
                   >
                     Reset
                   </button>
-                  <button className="py-3 border border-[var(--accent)]/40 text-[var(--accent)] font-medium rounded-xl hover:bg-[var(--accent)]/10 transition-all duration-300">
-                    Save
+                  <button type="button" onClick={handleSaveBuild} className="py-3 border border-[var(--accent)]/40 text-[var(--accent)] font-medium rounded-xl hover:bg-[var(--accent)]/10 transition-colors duration-300">
+                    Download Build
                   </button>
                 </div>
+                <p aria-live="polite" className="text-xs text-[var(--muted)]">{saveMessage}</p>
               </div>
             </div>
 
@@ -604,6 +602,7 @@ export default function ConfiguratorPage() {
                 {partConfigs.length} options
               </span>
             </div>
+            <p className="mb-2 text-[10px] text-[var(--muted)] sm:hidden">Swipe to see all 6 parts →</p>
             <div
               className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0"
               style={{ touchAction: "pan-x" }}
@@ -761,24 +760,27 @@ export default function ConfiguratorPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleSaveBuild}
+                  aria-label="Download build as JSON"
                   className="flex-1 rounded-xl border border-[var(--accent)]/40 px-3 py-2.5 text-[12px] font-medium text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/10 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
                   style={{ touchAction: "manipulation" }}
                 >
-                  Save Build
+                  <span className="sm:hidden">Save JSON</span><span className="hidden sm:inline">Download Build</span>
                 </button>
-                <button
-                  type="button"
-                  className="flex-[1.5] rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] px-3 py-2.5 text-[12px] font-semibold text-[var(--bg)] transition-all duration-300 hover:shadow-lg hover:shadow-[var(--accent)]/25 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
+                <a
+                  href={quoteHref}
+                  className="flex flex-[1.5] items-center justify-center rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--violet)] px-3 py-2.5 text-center text-[12px] font-semibold text-[var(--bg)] transition-[box-shadow,transform] duration-300 hover:shadow-lg hover:shadow-[var(--accent)]/25 sm:flex-none sm:px-5 sm:py-2 sm:text-sm"
                   style={{ touchAction: "manipulation" }}
                 >
-                  Request Quote
-                </button>
+                  <span className="sm:hidden">Email Quote</span><span className="hidden sm:inline">Email for Quote</span>
+                </a>
               </div>
+              <p aria-live="polite" className="text-xs text-[var(--muted)]">{saveMessage}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

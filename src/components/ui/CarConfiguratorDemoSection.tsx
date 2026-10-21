@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
-import CarConfiguratorScene from "@/components/CarConfiguratorScene";
 import type { CarPart } from "@/components/CarModel";
 import {
   ConfigurablePart,
@@ -17,6 +17,8 @@ interface ColorOption {
   name: string;
   value: string;
 }
+
+const CarConfiguratorScene = dynamic(() => import("@/components/CarConfiguratorScene"), { ssr: false });
 
 const COLOR_OPTIONS: ColorOption[] = [
   { id: "carbon-black", name: "Carbon Black", value: "#18181b" },
@@ -67,12 +69,20 @@ export default function CarConfiguratorDemoSection() {
     resetColors,
   } = useConfiguratorStore();
 
-  const [isLoading, setIsLoading] = useState(true);
   const viewerPulseRef = useRef<HTMLDivElement | null>(null);
+  const viewerContainerRef = useRef<HTMLDivElement | null>(null);
+  const [viewerNear, setViewerNear] = useState(false);
+  const [viewerMounted, setViewerMounted] = useState(false);
 
   useEffect(() => {
-    const t = window.setTimeout(() => setIsLoading(false), 900);
-    return () => window.clearTimeout(t);
+    const target = viewerContainerRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setViewerNear(entry.isIntersecting);
+      if (entry.isIntersecting) setViewerMounted(true);
+    }, { rootMargin: "400px" });
+    observer.observe(target);
+    return () => observer.disconnect();
   }, []);
 
   const currentPartConfig = useMemo(
@@ -188,7 +198,7 @@ export default function CarConfiguratorDemoSection() {
   return (
     <section
       id="configurator-demo"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]/90 px-4 py-14 backdrop-blur-[2px] sm:px-6 sm:py-24 lg:py-28"
+      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)] px-4 py-14 sm:px-6 sm:py-24 lg:py-28"
     >
       <div className="mx-auto w-full max-w-[1200px]">
         <motion.header
@@ -202,7 +212,7 @@ export default function CarConfiguratorDemoSection() {
             03 / Demo
           </p>
           <h2 className="font-monument text-2xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
-            Configure your drive
+            Configure Your Drive
           </h2>
           <p className="font-neue mt-2 text-[0.85rem] leading-relaxed text-gray-400 sm:mt-3 sm:text-[0.9rem]">
             A real-time, in-browser configurator. Pick a part, swap a finish — see it instantly.
@@ -211,15 +221,16 @@ export default function CarConfiguratorDemoSection() {
         </motion.header>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/95">
+          <div ref={viewerContainerRef} className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/95">
             <div ref={viewerPulseRef} className="relative">
               <div className="aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[560px]">
-                <CarConfiguratorScene
+                {viewerMounted ? <CarConfiguratorScene
+                  active={viewerNear}
                   colors={partColors}
                   selectedPart={selectedPart ? (selectedPart as CarPart) : null}
                   onPartClick={handlePartClick}
                   onPartHover={handlePartHover}
-                />
+                /> : null}
               </div>
 
               <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
@@ -257,14 +268,7 @@ export default function CarConfiguratorDemoSection() {
                 Drag to rotate · Scroll to zoom
               </div>
 
-              {isLoading ? (
-                <div className="absolute inset-0 z-[3] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-[0.72rem] uppercase tracking-[0.22em] text-white/75">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
-                    Loading model
-                  </div>
-                </div>
-              ) : null}
+              {!viewerMounted ? <p className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center text-sm text-[var(--muted)]">3D Preview Loads As You Scroll</p> : null}
             </div>
           </div>
 

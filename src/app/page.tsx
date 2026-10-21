@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import CustomCursor from "@/components/CustomCursor";
 import AboutSection from "@/components/ui/AboutSection";
 import ContactSection from "@/components/ui/ContactSection";
 import Navigation from "@/components/ui/Navbar";
@@ -81,20 +80,23 @@ const HeroSection = dynamic(() => import("@/components/HeroSection"), {
   ssr: false,
   loading: () => (
     <section
-      className="relative min-h-[100dvh] w-full bg-black"
-      aria-hidden
-    />
+      id="home"
+      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 bg-black px-4 text-center"
+    >
+      <h1 className="font-monument text-[clamp(2.8rem,14vw,11rem)] font-bold leading-[0.95] tracking-tight text-[#b4dfd2]">AIMEN<br />QAISER</h1>
+      <p className="text-xs uppercase tracking-[0.2em] text-white/75 sm:text-sm">3D Frontend Engineer · Creative Developer</p>
+      <a href="#projects" className="rounded-full border border-[var(--accent)] px-5 py-2 text-sm text-[var(--accent)]">Explore Work ↓</a>
+    </section>
   ),
 });
 
 export default function Home() {
   return (
     <>
-      <Scene />
-      <main className="relative z-10 bg-transparent">
+      <main id="main-content" className="relative z-10 bg-transparent">
+        <Scene />
         <ChatComingSoon />
         <Navigation />
-        <CustomCursor />
         <HeroSection sectionId="home" />
         <MarqueeStrip />
         <ProjectsSection projects={PROJECTS_DATA} />

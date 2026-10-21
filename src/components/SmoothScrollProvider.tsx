@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -30,43 +29,24 @@ type SmoothScrollProviderProps = {
 export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
   const [lenis, setLenis] = useState<Lenis | null>(null);
 
-  useLayoutEffect(() => {
-    if (typeof window === "undefined") return;
-    if ("scrollRestoration" in history) {
-      history.scrollRestoration = "manual";
-    }
-    window.scrollTo(0, 0);
-  }, []);
-
   useEffect(() => {
-    if ("scrollRestoration" in history) {
-      history.scrollRestoration = "manual";
-    }
-
-    const syncScrollToTop = (lenis: Lenis) => {
-      window.scrollTo(0, 0);
-      lenis.scrollTo(0, { immediate: true });
-    };
-
     const isTouchDevice =
       "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const instance = new Lenis({
       duration: 1.2,
-      smoothWheel: !isTouchDevice,
+      smoothWheel: !isTouchDevice && !reduceMotion,
       syncTouch: false,
-      touchMultiplier: 0,
       wheelMultiplier: 1,
       naiveDimensions: true,
     });
 
     setLenis(instance);
     instance.start();
-    syncScrollToTop(instance);
 
     const syncLenisWithGsap = (time: number) => instance.raf(time * 1000);
     gsap.ticker.add(syncLenisWithGsap);
-    gsap.ticker.lagSmoothing(0);
 
     const onScroll = () => ScrollTrigger.update();
     instance.on("scroll", onScroll);
@@ -76,37 +56,38 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
     };
     ScrollTrigger.addEventListener("refresh", onStRefresh);
 
-    const refreshFromTop = () => {
-      syncScrollToTop(instance);
+    const initialHash = window.location.hash;
+    let initialHashChecks = 0;
+
+    const refreshLayout = () => {
       ScrollTrigger.refresh();
       instance.resize();
+      if (initialHash && initialHashChecks < 2) {
+        initialHashChecks += 1;
+        let targetId = initialHash.slice(1);
+        try { targetId = decodeURIComponent(targetId); } catch { /* keep raw hash */ }
+        const target = document.getElementById(targetId);
+        if (target) instance.scrollTo(target, { immediate: true });
+      }
     };
 
-    requestAnimationFrame(() => {
-      refreshFromTop();
-      requestAnimationFrame(refreshFromTop);
-    });
-
-    const onLoad = () => {
-      refreshFromTop();
-      requestAnimationFrame(() => {
-        refreshFromTop();
-        window.setTimeout(() => refreshFromTop(), 50);
-      });
-    };
+    const initialFrame = requestAnimationFrame(refreshLayout);
+    const hashTimer = initialHash ? window.setTimeout(refreshLayout, 300) : 0;
+    const onLoad = () => requestAnimationFrame(refreshLayout);
     if (document.readyState === "complete") {
-      queueMicrotask(onLoad);
+      onLoad();
     } else {
       window.addEventListener("load", onLoad, { once: true });
     }
 
     return () => {
       window.removeEventListener("load", onLoad);
+      cancelAnimationFrame(initialFrame);
+      if (hashTimer) window.clearTimeout(hashTimer);
       ScrollTrigger.removeEventListener("refresh", onStRefresh);
       instance.off("scroll", onScroll);
       gsap.ticker.remove(syncLenisWithGsap);
       instance.destroy();
-      setLenis(null);
     };
   }, []);
 

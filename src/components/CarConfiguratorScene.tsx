@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { CarModel, CarPart, CarColors } from "./CarModel";
 
 interface CarConfiguratorSceneProps {
+  active?: boolean;
   colors?: Partial<CarColors>;
   selectedPart?: CarPart | null;
   onPartClick?: (part: CarPart) => void;
@@ -47,6 +48,7 @@ function useIsMobile(query = "(max-width: 639px)"): boolean {
 }
 
 export function CarConfiguratorScene({
+  active = true,
   colors,
   selectedPart,
   onPartClick,
@@ -58,6 +60,8 @@ export function CarConfiguratorScene({
   return (
     <div className={`w-full h-full ${className}`}>
       <Canvas
+        aria-label="Interactive 3D car preview. Use the part and color controls to customize it."
+        frameloop={active ? "always" : "never"}
         shadows={!isMobile}
         dpr={isMobile ? [1, 1] : [1, 2]}
         camera={{

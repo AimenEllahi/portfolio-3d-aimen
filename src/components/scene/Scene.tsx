@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useProgress } from "@react-three/drei";
 import * as THREE from "three";
@@ -61,11 +61,36 @@ function SceneReadyProbe({ onReady }: { onReady?: () => void }) {
 }
 
 export default function Scene({ onReady }: SceneProps) {
+  const [active, setActive] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [coarsePointer, setCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setActive(!document.hidden && window.scrollY < window.innerHeight * 2);
+      setReduceMotion(motion.matches);
+      setCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    document.addEventListener("visibilitychange", update);
+    motion.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      document.removeEventListener("visibilitychange", update);
+      motion.removeEventListener("change", update);
+    };
+  }, []);
+
   return (
     <Canvas
+      frameloop={active ? (reduceMotion ? "demand" : "always") : "never"}
       camera={{ fov: 45, position: [0, 0, 8] }}
-      gl={{ antialias: true, alpha: true }}
-      dpr={[1, 1.5]}
+      gl={{ antialias: !coarsePointer, alpha: true }}
+      dpr={coarsePointer ? [1, 1] : [1, 1.5]}
       performance={{ min: 0.5 }}
       style={{
         position: "fixed",
@@ -74,8 +99,10 @@ export default function Scene({ onReady }: SceneProps) {
         width: "100vw",
         height: "100dvh",
         minHeight: "100dvh",
-        zIndex: 5,
+        zIndex: 0,
         pointerEvents: "none",
+        mixBlendMode: "screen",
+        visibility: active ? "visible" : "hidden",
       }}
     >
       <SceneReadyProbe onReady={onReady} />

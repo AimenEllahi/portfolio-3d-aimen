@@ -33,7 +33,7 @@ export default function ChatComingSoon() {
 
     return (
         <div ref={panelRef}
-        className="fixed z-[70] flex flex-col items-end gap-3"
+        className="fixed z-[70] hidden flex-col items-end gap-3 sm:flex"
         style={{
           right: "max(1rem, env(safe-area-inset-right, 0px))",
           bottom: "max(1rem, env(safe-area-inset-bottom, 0px))",

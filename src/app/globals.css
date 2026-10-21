@@ -14,26 +14,37 @@
   padding: 0;
 }
 
-/* Custom cursor hides the system caret — only safe on mouse/desktop. */
-@media (pointer: fine) {
-  *,
-  *::before,
-  *::after {
-    cursor: none;
-  }
-}
-
 html,
 body {
   min-height: 100%;
 }
 
 html {
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
   /* `overflow: clip` clips horizontal overflow without creating a new
      scroll container, so position: sticky / ScrollTrigger pinning still
      works on iOS Safari. Falls back gracefully where unsupported. */
   overflow-x: clip;
+}
+
+button, a { touch-action: manipulation; }
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+[id] { scroll-margin-top: 6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
@@ -88,7 +99,7 @@ h6 {
   /* Text */
   --fg: #f0ede8;
   --muted: #94919a;
-  --subtle: #5a5760;
+  --subtle: #85818b;
 
   /* Accent (UI — buttons, links, labels) */
   --accent: #6ef0c8;

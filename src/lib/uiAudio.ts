@@ -2,7 +2,7 @@
  * Lightweight UI feedback — Web Audio oscillators (no external files).
  *
  * The `AudioContext` is allocated only inside `unlockUiAudio()` — during a transient user gesture
- * (tap, wheel, scroll, keyboard, mouse move). Sounds requested before unlock queue and play once
+ * (tap or keyboard). Sounds requested during unlock queue and play once
  * the graph is running.
  */
 
@@ -44,11 +44,12 @@ function flushInteractiveQueue(): void {
 
 export function unlockUiAudio(): void {
   if (typeof window === "undefined") return;
+  if (navigator.userActivation && !navigator.userActivation.isActive) return;
   const c = ensureCtxCreated();
   if (!c) return;
   void c.resume().then(() => {
     flushInteractiveQueue();
-  });
+  }).catch(() => {});
 }
 
 function gestureUnlock(): void {
@@ -71,18 +72,11 @@ function installGlobalGestureUnlock(): void {
     "pointerdown",
     "touchstart",
     "touchend",
-    "wheel",
     "keydown",
-    "scroll",
   ]) {
     window.addEventListener(type, gestureUnlock, passive);
   }
 
-  document.addEventListener("mousemove", gestureUnlock, {
-    passive: true,
-    capture: true,
-    once: true,
-  });
 }
 
 if (typeof window !== "undefined") {
@@ -159,13 +153,14 @@ export function playUiSound(id: UiSoundId): void {
   const ctx = getExistingCtx();
 
   if (!ctx) {
-    pendingInteractive.push(id);
     return;
   }
 
   if (ctx.state !== "running") {
     pendingInteractive.push(id);
-    void ctx.resume().then(() => flushInteractiveQueue());
+    if (navigator.userActivation?.isActive) {
+      void ctx.resume().then(() => flushInteractiveQueue()).catch(() => {});
+    }
     return;
   }
 

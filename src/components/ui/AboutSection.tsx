@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import MagneticButton from "@/components/MagneticButton";
 
 const SKILLS = [
@@ -149,13 +149,9 @@ const fadeUpItem = {
 };
 
 function AboutProfilePhoto() {
-  const reduceMotion = useReducedMotion();
-
   return (
     <div
-      className="group/photo relative mx-auto aspect-[4/5] w-full max-w-[220px] shrink-0 cursor-pointer select-none overflow-hidden rounded-2xl border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.75)] transition-[border-color,box-shadow,transform] duration-300 hover:border-[var(--accent)]/35 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.99] motion-safe:focus-within:border-[var(--accent)]/40 motion-safe:focus-within:shadow-[0_0_56px_-20px_var(--accent-ghost)] sm:mx-0"
-      tabIndex={0}
-      aria-label="Profile photo — hover or press and hold to sharpen"
+      className="relative mx-auto aspect-[4/5] w-full max-w-[220px] shrink-0 overflow-hidden rounded-2xl border border-white/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.75)] sm:mx-0"
     >
       <Image
         src={PROFILE_SRC}
@@ -163,20 +159,12 @@ function AboutProfilePhoto() {
         fill
         draggable={false}
         sizes="(max-width: 640px) 70vw, 220px"
-        className={`object-cover scale-[1.04] blur-2xl motion-reduce:blur-none motion-reduce:scale-105 group-hover/photo:blur-none group-hover/photo:scale-105 group-active/photo:blur-none group-active/photo:scale-105 group-focus-visible/photo:blur-none ${
-          reduceMotion ? "" : "motion-safe:transition-[filter,transform] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)]"
-        }`}
+        className="object-cover"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06] group-hover/photo:ring-[var(--accent)]/30"
+        className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]"
       />
-      <p className="pointer-events-none absolute bottom-3 left-2 right-2 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-white/70 drop-shadow-[0_1px_10px_rgba(0,0,0,0.9)] transition-opacity duration-300 [@media(hover:hover)]:group-hover/photo:opacity-0 group-active/photo:opacity-0 motion-reduce:opacity-0 sm:text-[11px]">
-        Hover to reveal
-      </p>
-      <span className="pointer-events-none absolute left-3 top-3 text-[9px] uppercase tracking-[0.16em] text-white/45 opacity-95 [@media(hover:hover)]:hidden sm:text-[10px]">
-        Tap &amp; hold
-      </span>
     </div>
   );
 }
@@ -313,7 +301,7 @@ export default function AboutSection() {
                 }
                 className="rounded-full border border-white/[0.12] px-7 py-[10px] text-[13px] text-[var(--muted)]"
               >
-                Get in touch
+                Get in Touch
               </button>
             </motion.div>
           </div>
@@ -379,7 +367,7 @@ export default function AboutSection() {
               Where I&apos;ve worked
             </h3>
             <p className="mt-3 max-w-[300px] text-[14px] leading-[1.7] text-[var(--muted)]">
-              From enterprise SaaS to AI startups - each role shaped how I
+              From enterprise SaaS to AI startups, each role shaped how I
               think about performance, scale, and craft.
             </p>
           </div>

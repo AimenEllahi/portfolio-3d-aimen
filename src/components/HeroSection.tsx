@@ -83,7 +83,8 @@ export default function HeroSection({
   const backdropBlurLayerRef = useRef<HTMLDivElement>(null);
   const maskLayerRef = useRef<SVGRectElement>(null);
   const textGroupRef = useRef<SVGGElement>(null);
-  const scrollHintRef = useRef<HTMLDivElement>(null);
+  const visibleTextGroupRef = useRef<SVGGElement>(null);
+  const heroIntroRef = useRef<HTMLDivElement>(null);
   const measureLine1Ref = useRef<SVGTextElement>(null);
   const measureLine2Ref = useRef<SVGTextElement>(null);
   const svgMaskRootRef = useRef<SVGSVGElement>(null);
@@ -91,6 +92,8 @@ export default function HeroSection({
   const maskElementRef = useRef<SVGMaskElement>(null);
   const textLine1Ref = useRef<SVGTextElement>(null);
   const textLine2Ref = useRef<SVGTextElement>(null);
+  const visibleLine1Ref = useRef<SVGTextElement>(null);
+  const visibleLine2Ref = useRef<SVGTextElement>(null);
   const mLetterRef = useRef<SVGTSpanElement | null>(null);
   /** Center of letter "M" in mask SVG units — zoom feels like diving into that glyph */
   const scaleOriginRef = useRef<{ x: number; y: number }>({
@@ -143,6 +146,8 @@ export default function HeroSection({
     const maskRect = maskLayerRef.current;
     const t1 = textLine1Ref.current;
     const t2 = textLine2Ref.current;
+    const v1 = visibleLine1Ref.current;
+    const v2 = visibleLine2Ref.current;
     if (!svg || !rect || !maskEl) return;
 
     maskEl.setAttribute("mask-type", "luminance");
@@ -163,8 +168,8 @@ export default function HeroSection({
     /** Mobile screens get tighter vertical spacing so the two name
      *  lines don't drift apart visually. Desktop layout unchanged. */
     const isMobile = w < 640;
-    const aimenY = isMobile ? h * 0.38 : h * 0.45;
-    const qaiserY = isMobile ? h * 0.68 : h * 0.75;
+    const aimenY = isMobile ? h * 0.43 : h * 0.31;
+    const qaiserY = isMobile ? h * 0.57 : h * 0.61;
 
     if (t1 && fontPx > 0) {
       t1.setAttribute("x", String(w / 2));
@@ -174,6 +179,8 @@ export default function HeroSection({
       t2.setAttribute("x", String(w / 2));
       t2.setAttribute("y", String(qaiserY));
     }
+    if (v1) { v1.setAttribute("x", String(w / 2)); v1.setAttribute("y", String(aimenY)); }
+    if (v2) { v2.setAttribute("x", String(w / 2)); v2.setAttribute("y", String(qaiserY)); }
   }, [fontPx]);
 
   const measureAndPrepareFonts = useCallback(async () => {
@@ -288,8 +295,7 @@ export default function HeroSection({
     const pinWrap = pinWrapRef.current;
     const textG = textGroupRef.current;
     const maskLayer = maskLayerRef.current;
-    const scrollHint = scrollHintRef.current;
-    if (!section || !pinWrap || !textG || !maskLayer || !scrollHint) return;
+    if (!section || !pinWrap || !textG || !maskLayer) return;
 
     const applyFrame = (p: number) => {
       const { x: cx, y: cy } = scaleOriginRef.current;
@@ -299,6 +305,10 @@ export default function HeroSection({
         "transform",
         `translate(${cx}, ${cy}) scale(${scale}) translate(${-cx}, ${-cy})`,
       );
+      if (visibleTextGroupRef.current) {
+        visibleTextGroupRef.current.setAttribute("transform", textG.getAttribute("transform") ?? "");
+        visibleTextGroupRef.current.style.opacity = String(Math.max(0, 0.78 * (1 - p / 0.3)));
+      }
 
       maskLayer.style.transition = "";
       /* Stencil fades early so WebGL dome + fog read clearly through clears */
@@ -321,8 +331,7 @@ export default function HeroSection({
         maskLayer.setAttribute("visibility", "visible");
       }
 
-      const hintAlpha = p < 0.08 ? 1 - p / 0.08 : 0;
-      scrollHint.style.opacity = Math.max(0, hintAlpha).toFixed(3);
+      if (heroIntroRef.current) heroIntroRef.current.style.opacity = String(Math.max(0, 1 - p / 0.16));
 
       const blurBackdrop = backdropBlurLayerRef.current;
       if (blurBackdrop && window.innerWidth >= 768) {
@@ -350,6 +359,12 @@ export default function HeroSection({
     );
 
     scrollTriggerRef.current?.kill();
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      applyFrame(0);
+      onHeroReadyRef.current?.();
+      return;
+    }
 
     scrollTriggerRef.current = ScrollTrigger.create({
       trigger: section,
@@ -389,6 +404,7 @@ export default function HeroSection({
       className="relative w-full bg-transparent"
       style={{ height: "100dvh" }}
     >
+      <h1 className="sr-only">Aimen Qaiser — 3D Frontend Engineer</h1>
       <svg
         aria-hidden
         style={{
@@ -494,8 +510,8 @@ export default function HeroSection({
                       }
                       y={
                         typeof window !== "undefined"
-                          ? window.innerHeight * 0.45
-                          : 486
+                          ? window.innerHeight * 0.31
+                          : 335
                       }
                       fill="black"
                       style={textStyle(fontPx)}
@@ -515,8 +531,8 @@ export default function HeroSection({
                       }
                       y={
                         typeof window !== "undefined"
-                          ? window.innerHeight * 0.75
-                          : 810
+                          ? window.innerHeight * 0.61
+                          : 659
                       }
                       fill="black"
                       style={textStyle(fontPx)}
@@ -538,26 +554,31 @@ export default function HeroSection({
             mask={`url(#${maskId})`}
             style={{ willChange: "opacity" }}
           />
+          {fontsReady && fontPx > 0 ? (
+            <g ref={visibleTextGroupRef} aria-hidden="true" style={{ opacity: 0.78, willChange: "opacity" }}>
+              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>AIMEN</text>
+              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>QAISER</text>
+            </g>
+          ) : null}
         </svg>
 
-        <div
-          ref={scrollHintRef}
-          className="pointer-events-none absolute left-1/2 z-[3] flex -translate-x-1/2 flex-col items-center gap-2 sm:gap-3 select-none [bottom:max(1.5rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] sm:[bottom:max(2rem,calc(env(safe-area-inset-bottom,0px)+1.25rem))]"
-        >
-          <span
-            className="font-neue uppercase text-white text-[0.55rem] sm:text-[0.65rem]"
-            style={{
-              letterSpacing: "0.4em",
-              opacity: 0.35,
+        <div ref={heroIntroRef} className="absolute inset-x-4 bottom-[15%] z-[3] flex flex-col items-center gap-3 text-center sm:bottom-[11%]">
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/75 sm:text-sm">3D Frontend Engineer · Creative Developer</p>
+          <a
+            href="#projects"
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              history.pushState(null, "", "#projects");
+              if (lenisRef.current) lenisRef.current.scrollTo("#projects");
+              else document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" });
             }}
+            className="rounded-full border border-[var(--accent)]/65 bg-[var(--accent)]/10 px-5 py-2 text-sm font-medium text-[var(--accent)] transition-[background-color,border-color] hover:border-[var(--accent)] hover:bg-[var(--accent)]/20"
           >
-            Scroll
-          </span>
-          <div
-            className="hero-scroll-line w-px bg-white opacity-20 h-7 sm:h-10"
-            style={{ transformOrigin: "bottom center" }}
-          />
+            Explore Work ↓
+          </a>
         </div>
+
       </div>
     </section>
   );

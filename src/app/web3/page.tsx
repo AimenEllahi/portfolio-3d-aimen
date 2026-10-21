@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import Link from "next/link";
 import SolidityDemo from "@/components/SolidityDemo";
 
 export default function Web3Page() {
@@ -11,6 +12,10 @@ export default function Web3Page() {
 
   // GSAP entrance animations
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      gsap.set([titleRef.current, subtitleRef.current, demoRef.current], { opacity: 1, y: 0 });
+      return;
+    }
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
     tl.fromTo(
@@ -30,10 +35,12 @@ export default function Web3Page() {
         { opacity: 1, y: 0, duration: 0.8 },
         "-=0.4"
       );
+    return () => { tl.kill(); };
   }, []);
 
   return (
-    <div className="min-h-screen pt-20">
+    <main id="main-content" className="min-h-screen pt-20">
+      <Link href="/" className="mx-6 inline-flex min-h-11 items-center text-sm text-[var(--accent)] transition-colors hover:text-white sm:mx-10">← Back to Portfolio</Link>
       {/* Hero Section */}
       <section className="relative py-24 px-6">
         <div className="max-w-7xl mx-auto">
@@ -80,7 +87,7 @@ export default function Web3Page() {
             ].map((capability, index) => (
               <div
                 key={index}
-                className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-[background-color,border-color] duration-300"
               >
                 <div className="text-3xl mb-3">{capability.icon}</div>
                 <h3 className="text-lg font-semibold mb-2 text-white">
@@ -104,6 +111,6 @@ export default function Web3Page() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

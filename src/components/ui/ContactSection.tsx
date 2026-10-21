@@ -14,6 +14,7 @@ function MagneticMailCta() {
     const arena = arenaRef.current;
     const link = linkRef.current;
     if (!arena || !link) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
 
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
@@ -22,7 +23,14 @@ function MagneticMailCta() {
       p.x = lerp(p.x, p.tx, 0.14);
       p.y = lerp(p.y, p.ty, 0.14);
       link.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
-      rafRef.current = requestAnimationFrame(tick);
+      if (Math.abs(p.x - p.tx) + Math.abs(p.y - p.ty) > 0.15) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = 0;
+      }
+    };
+    const start = () => {
+      if (!rafRef.current) rafRef.current = requestAnimationFrame(tick);
     };
 
     const onMove = (e: PointerEvent) => {
@@ -34,14 +42,15 @@ function MagneticMailCta() {
         ((e.clientX - cx) / Math.max(1, r.width / 2)) * 28 * mag;
       posRef.current.ty =
         ((e.clientY - cy) / Math.max(1, r.height / 2)) * 20 * mag;
+      start();
     };
 
     const reset = () => {
       posRef.current.tx = 0;
       posRef.current.ty = 0;
+      start();
     };
 
-    rafRef.current = requestAnimationFrame(tick);
     arena.addEventListener("pointermove", onMove);
     arena.addEventListener("pointerleave", reset);
 
@@ -63,7 +72,7 @@ function MagneticMailCta() {
         className="inline-flex min-w-[min(100%,280px)] items-center justify-center rounded-full border-2 border-[var(--accent)] bg-[var(--accent)]/10 px-10 py-4 text-center text-base font-semibold text-[var(--accent)] shadow-[0_0_0_1px_rgba(110,240,200,0.12)] transition-[background-color,box-shadow] duration-300 hover:bg-[var(--accent)]/18 hover:shadow-[0_20px_60px_-24px_var(--accent-ghost)] sm:text-lg"
         style={{ willChange: "transform" }}
       >
-        Compose email
+        Compose Email
       </a>
     </div>
   );
@@ -80,7 +89,7 @@ export default function ContactSection() {
           Let&apos;s Work Together
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-sm text-[var(--muted)] sm:text-base">
-          Open to HiWi roles, freelance, and collaborations—especially 3D web and
+          Open to working student roles, freelance, and collaborations—especially 3D web and
           product UI.
         </p>
 

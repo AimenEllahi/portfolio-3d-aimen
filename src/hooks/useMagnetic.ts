@@ -17,6 +17,7 @@ export function useMagnetic<T extends HTMLElement>(
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
 
     const onMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
@@ -39,6 +40,7 @@ export function useMagnetic<T extends HTMLElement>(
         y: deltaY * strength,
         duration: 0.3,
         ease: "power2.out",
+        overwrite: true,
       });
     };
 
@@ -51,11 +53,11 @@ export function useMagnetic<T extends HTMLElement>(
       });
     };
 
-    window.addEventListener("mousemove", onMove, { passive: true });
+    el.addEventListener("mousemove", onMove, { passive: true });
     el.addEventListener("mouseleave", onLeave);
 
     return () => {
-      window.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
       gsap.killTweensOf(el);
       gsap.set(el, { x: 0, y: 0 });

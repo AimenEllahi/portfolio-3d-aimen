@@ -221,7 +221,7 @@ export default function VoronoiShaderSection() {
     glRef.current = { gl, prog, uTime, uResolution, uMouse, uHover };
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio, 1.5);
+      const dpr = Math.min(window.devicePixelRatio, window.matchMedia("(pointer: coarse)").matches ? 1 : 1.5);
       const w = canvas.clientWidth * dpr;
       const h = canvas.clientHeight * dpr;
       canvas.width = w;
@@ -232,18 +232,35 @@ export default function VoronoiShaderSection() {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    let visible = true;
-    const onVisChange = () => {
-      visible = !document.hidden;
+    let inView = false;
+    let running = false;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const frameInterval = window.matchMedia("(pointer: coarse)").matches ? 40 : 25;
+    let lastDraw = 0;
+    const start = () => {
+      if (!running && inView && !document.hidden) {
+        running = true;
+        rafRef.current = requestAnimationFrame(tick);
+      }
     };
+    const onVisChange = () => start();
     document.addEventListener("visibilitychange", onVisChange);
 
     const tick = () => {
-      rafRef.current = requestAnimationFrame(tick);
-      if (!visible || !glRef.current) return;
+      if (!inView || document.hidden || !glRef.current) {
+        running = false;
+        return;
+      }
+
+      const now = performance.now();
+      if (!reduceMotion.matches && now - lastDraw < frameInterval) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      lastDraw = now;
 
       const { gl, uTime, uResolution, uMouse, uHover } = glRef.current;
-      const t = (performance.now() - startRef.current) / 1000;
+      const t = (now - startRef.current) / 1000;
 
       const lx = mouseLerpRef.current.x;
       const ly = mouseLerpRef.current.y;
@@ -260,11 +277,23 @@ export default function VoronoiShaderSection() {
       gl.uniform2f(uMouse, mouseLerpRef.current.x, mouseLerpRef.current.y);
       gl.uniform1f(uHover, hoverLerpRef.current);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (reduceMotion.matches) {
+        running = false;
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
     };
-    rafRef.current = requestAnimationFrame(tick);
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      start();
+    }, { rootMargin: "100px" });
+    observer.observe(canvas);
+    reduceMotion.addEventListener("change", start);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      observer.disconnect();
+      reduceMotion.removeEventListener("change", start);
       ro.disconnect();
       document.removeEventListener("visibilitychange", onVisChange);
       gl.deleteProgram(prog);
