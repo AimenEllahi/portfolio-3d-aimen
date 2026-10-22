@@ -17,6 +17,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const TEST_FONT_PX = 100;
 const LETTER_TRACK = 0.02;
+const NAME_LINES = ["AIMEN", "QAISER"] as const;
 
 function readHeroScaleOrigin(
   iw: number,
@@ -48,10 +49,9 @@ function nudgeScaleOriginX(cx: number, viewportWidth: number) {
 
 /** Scroll distance (as vh) while hero remains pinned. */
 function heroPinDistanceVhForWidth(w: number): number {
-  if (w < 480) return 100;
-  if (w < 768) return 115;
-  if (w < 1024) return 130;
-  return 150;
+  if (w < 480) return 65;
+  if (w < 768) return 70;
+  return 75;
 }
 
 const textStyle = (fontSize: number): CSSProperties => ({
@@ -105,6 +105,7 @@ export default function HeroSection({
   });
 
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
+  const floatStrengthRef = useRef(1);
 
   const [fontsReady, setFontsReady] = useState(false);
   const [fontPx, setFontPx] = useState(0);
@@ -267,6 +268,42 @@ export default function HeroSection({
   }, [fontsReady, fontPx]);
 
   useEffect(() => {
+    if (!fontsReady || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const tweens: gsap.core.Tween[] = [];
+    const context = gsap.context(() => {
+      NAME_LINES.forEach((line, lineIndex) => {
+        Array.from(line).forEach((_, letterIndex) => {
+          const letters = section.querySelectorAll<SVGTSpanElement>(
+            `[data-hero-letter="${lineIndex}-${letterIndex}"]`,
+          );
+          tweens.push(gsap.to(letters, {
+            y: (letterIndex % 2 === 0 ? -1 : 1) * (2.5 + (letterIndex % 3) * 0.5),
+            duration: 2.8 + (letterIndex % 4) * 0.35 + lineIndex * 0.2,
+            delay: letterIndex * 0.17 + lineIndex * 0.24,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            modifiers: {
+              y: (value) => `${parseFloat(value) * floatStrengthRef.current}px`,
+            },
+          }));
+        });
+      });
+    }, section);
+    const observer = new IntersectionObserver(([entry]) => {
+      tweens.forEach((tween) => entry.isIntersecting ? tween.resume() : tween.pause());
+    });
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+      context.revert();
+    };
+  }, [fontsReady]);
+
+  useEffect(() => {
     if (!fontsReady || fontPx <= 0) return;
     const onResize = () => {
       measureAndPrepareFonts();
@@ -305,8 +342,10 @@ export default function HeroSection({
     if (!section || !pinWrap || !textG || !maskLayer) return;
 
     const applyFrame = (p: number) => {
+      const floatFade = gsap.utils.clamp(0, 1, p / 0.15);
+      floatStrengthRef.current = 1 - floatFade * floatFade * (3 - 2 * floatFade);
       const { x: cx, y: cy } = scaleOriginRef.current;
-      const scrollEase = gsap.parseEase("power2.inOut")(p);
+      const scrollEase = gsap.parseEase("power4.in")(p);
       const scale = 1 + scrollEase * maxScaleBoost;
       textG.setAttribute(
         "transform",
@@ -314,13 +353,13 @@ export default function HeroSection({
       );
       if (visibleTextGroupRef.current) {
         visibleTextGroupRef.current.setAttribute("transform", textG.getAttribute("transform") ?? "");
-        visibleTextGroupRef.current.style.opacity = String(Math.max(0, 0.78 * (1 - p / 0.3)));
+        visibleTextGroupRef.current.style.opacity = String(Math.max(0, 0.78 * (1 - p / 0.55)));
       }
 
       maskLayer.style.transition = "";
-      /* Stencil fades early so WebGL dome + fog read clearly through clears */
-      const fadeStart = 0.38;
-      const fadeEnd = 0.42;
+      /* Keep the stencil through the zoom, then reveal the scene at the handoff. */
+      const fadeStart = 0.78;
+      const fadeEnd = 0.96;
       let overlayOpacity = 1;
       if (p > fadeStart) {
         const span = fadeEnd - fadeStart;
@@ -525,11 +564,9 @@ export default function HeroSection({
                       fill="black"
                       style={textStyle(fontPx)}
                     >
-                      <tspan>A</tspan>
-                      <tspan>I</tspan>
-                      <tspan ref={mLetterRef}>M</tspan>
-                      <tspan>E</tspan>
-                      <tspan>N</tspan>
+                      {Array.from(NAME_LINES[0]).map((letter, index) => (
+                        <tspan key={index} ref={index === 2 ? mLetterRef : undefined} data-hero-letter={`0-${index}`}>{letter}</tspan>
+                      ))}
                     </text>
                     <text
                       ref={textLine2Ref}
@@ -546,7 +583,9 @@ export default function HeroSection({
                       fill="black"
                       style={textStyle(fontPx)}
                     >
-                      QAISER
+                      {Array.from(NAME_LINES[1]).map((letter, index) => (
+                        <tspan key={index} data-hero-letter={`1-${index}`}>{letter}</tspan>
+                      ))}
                     </text>
                   </>
                 ) : null}
@@ -565,8 +604,16 @@ export default function HeroSection({
           />
           {fontsReady && fontPx > 0 ? (
             <g ref={visibleTextGroupRef} aria-hidden="true" style={{ opacity: 0.78, willChange: "opacity" }}>
-              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>AIMEN</text>
-              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>QAISER</text>
+              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>
+                {Array.from(NAME_LINES[0]).map((letter, index) => (
+                  <tspan key={index} data-hero-letter={`0-${index}`}>{letter}</tspan>
+                ))}
+              </text>
+              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>
+                {Array.from(NAME_LINES[1]).map((letter, index) => (
+                  <tspan key={index} data-hero-letter={`1-${index}`}>{letter}</tspan>
+                ))}
+              </text>
             </g>
           ) : null}
         </svg>

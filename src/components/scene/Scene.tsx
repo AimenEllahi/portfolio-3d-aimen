@@ -68,19 +68,14 @@ export default function Scene({ onReady }: SceneProps) {
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
-      const projectsEnd = document.getElementById("projects")?.getBoundingClientRect().bottom;
-      setActive(!document.hidden && (projectsEnd ?? window.innerHeight * 2) > 0);
+      setActive(!document.hidden);
       setReduceMotion(motion.matches);
       setCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
     };
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update, { passive: true });
     document.addEventListener("visibilitychange", update);
     motion.addEventListener("change", update);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
       document.removeEventListener("visibilitychange", update);
       motion.removeEventListener("change", update);
     };

@@ -16,7 +16,7 @@ export default function CameraRig() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    const easeZoom = gsap.parseEase("power2.inOut");
+    const easeZoom = gsap.parseEase("power4.in");
 
     let heroProgress = 0;
     let projectsProgress = 0;

@@ -348,7 +348,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   return (
     <section
       id="projects"
-      className="relative z-10 border-t border-[var(--border)] bg-[color:rgba(5,5,8,0.58)]"
+      className="relative z-10 border-t border-[var(--border)] bg-transparent"
       style={{ perspective: "1200px" }}
     >
       <div className="mx-auto flex w-full max-w-[1104px] flex-col px-4 pt-12 pb-20 sm:px-6 sm:pt-14 sm:pb-24 lg:pt-16 lg:pb-28">
@@ -365,7 +365,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
           <h2 className="font-monument text-3xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
             Selected Work
           </h2>
-          <p className="font-neue mt-3 text-[0.9rem] leading-relaxed text-gray-400">
+          <p className="font-neue mt-3 text-[0.9rem] leading-relaxed text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)]">
             A few things I&apos;ve built recently
           </p>
           <div className="mt-4 h-px w-20 bg-[var(--accent)]" />

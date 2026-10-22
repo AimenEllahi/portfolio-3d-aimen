@@ -332,7 +332,7 @@ export default function VoronoiShaderSection() {
   return (
     <section
       id="shader-lab"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]"
+      className="relative z-10 border-t border-[var(--border)] bg-transparent"
     >
       <div className="mx-auto w-full max-w-[1104px] px-4 sm:px-6">
         <motion.div
@@ -349,8 +349,8 @@ export default function VoronoiShaderSection() {
             <h2 className="font-monument text-2xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
               Shader Lab
             </h2>
-            <p className="font-neue text-[0.82rem] text-white/35 sm:text-[0.88rem]">
-              Move your mouse across the surface
+            <p className="font-neue text-[0.82rem] text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)] sm:text-[0.88rem]">
+              Move or touch the surface
             </p>
           </div>
           <div className="h-px w-16 bg-[var(--accent)] sm:w-20" />
@@ -414,7 +414,7 @@ export default function VoronoiShaderSection() {
         </div>
 
         <div className="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-neue max-w-lg text-[0.78rem] leading-relaxed text-white/30">
+          <p className="font-neue max-w-lg text-[0.78rem] leading-relaxed text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)]">
             A real-time Voronoi crystal field written in GLSL. Mouse proximity
             pushes cell centres, cracking and reforming the surface.
           </p>

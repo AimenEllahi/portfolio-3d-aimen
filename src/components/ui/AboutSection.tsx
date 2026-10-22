@@ -266,7 +266,7 @@ export default function AboutSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={SECTION_VIEWPORT}
               transition={{ duration: 0.75, ease: EASE, delay: 0.3 }}
-              className="mt-4 max-w-[480px] text-base leading-[1.7] text-[var(--muted)]"
+              className="mt-4 max-w-[480px] text-base leading-[1.7] text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)]"
             >
               Frontend Engineer with 3+ years building web applications with
               React, TypeScript, and Three.js. Built the frontend for DNDAI, a
@@ -366,7 +366,7 @@ export default function AboutSection() {
             <h3 className="font-monument text-[clamp(1.8rem,3.5vw,2.4rem)] text-[var(--fg)]">
               Where I&apos;ve worked
             </h3>
-            <p className="mt-3 max-w-[300px] text-[14px] leading-[1.7] text-[var(--muted)]">
+            <p className="mt-3 max-w-[300px] text-[14px] leading-[1.7] text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)]">
               From enterprise SaaS to AI startups, each role shaped how I
               think about performance, scale, and craft.
             </p>

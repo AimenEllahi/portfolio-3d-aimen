@@ -205,7 +205,7 @@ export default function CarConfiguratorDemoSection() {
   return (
     <section
       id="configurator-demo"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)] px-4 py-14 sm:px-6 sm:py-24 lg:py-28"
+      className="relative z-10 border-t border-[var(--border)] bg-transparent px-4 py-14 sm:px-6 sm:py-24 lg:py-28"
     >
       <div className="mx-auto w-full max-w-[1200px]">
         <motion.header
@@ -221,7 +221,7 @@ export default function CarConfiguratorDemoSection() {
           <h2 className="font-monument text-2xl font-bold tracking-tight text-[var(--fg)] sm:text-4xl lg:text-[2.5rem]">
             Configure Your Drive
           </h2>
-          <p className="font-neue mt-2 text-[0.85rem] leading-relaxed text-gray-400 sm:mt-3 sm:text-[0.9rem]">
+          <p className="font-neue mt-2 text-[0.85rem] leading-relaxed text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)] sm:mt-3 sm:text-[0.9rem]">
             A real-time, in-browser configurator. Pick a part, swap a finish — see it instantly.
           </p>
           <div className="mt-3 h-px w-16 bg-[var(--accent)] sm:mt-4 sm:w-20" />

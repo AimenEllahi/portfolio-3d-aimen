@@ -96,7 +96,11 @@ function MarqueeRow({
   const repeated = [...items, ...items, ...items];
 
   return (
-    <div className="w-full overflow-hidden" aria-hidden>
+    <div
+      className="w-full overflow-hidden"
+      style={{ maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}
+      aria-hidden
+    >
       <div ref={trackRef} className="flex items-center will-change-transform">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex shrink-0 items-center">
@@ -124,7 +128,7 @@ function MarqueeRow({
 export default function MarqueeStrip() {
   return (
     <div
-      className="relative z-10 w-full overflow-hidden border-y border-white/[0.05] bg-[var(--bg)]/40"
+      className="relative z-10 w-full overflow-hidden border-y border-white/[0.05] bg-transparent"
       aria-label="Technology stack"
     >
       <div className="border-b border-white/[0.04] py-3 sm:py-4">
@@ -139,22 +143,6 @@ export default function MarqueeStrip() {
         />
       </div>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-20 sm:w-32"
-        style={{
-          background:
-            "linear-gradient(to right, var(--bg) 0%, transparent 100%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-20 sm:w-32"
-        style={{
-          background:
-            "linear-gradient(to left, var(--bg) 0%, transparent 100%)",
-        }}
-      />
     </div>
   );
 }

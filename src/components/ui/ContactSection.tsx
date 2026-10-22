@@ -88,7 +88,7 @@ export default function ContactSection() {
         <h2 className="font-monument text-4xl font-bold text-white sm:text-5xl md:text-6xl">
           Let&apos;s Work Together
         </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-sm text-[var(--muted)] sm:text-base">
+        <p className="mx-auto mt-5 max-w-2xl text-sm text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)] sm:text-base">
           Open to working student roles, freelance, and collaborations—especially 3D web and
           product UI.
         </p>
@@ -98,7 +98,7 @@ export default function ContactSection() {
         <p className="mt-4">
           <a
             href={`mailto:${MAIL}`}
-            className="font-neue text-sm text-gray-400 transition-colors hover:text-[var(--accent)]"
+            className="font-neue text-sm text-[#d2dcda] [text-shadow:0_1px_5px_rgba(0,0,0,0.8)] transition-colors hover:text-[var(--accent)]"
           >
             {MAIL}
           </a>
