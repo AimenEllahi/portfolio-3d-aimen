@@ -35,7 +35,7 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const instance = new Lenis({
-      duration: 1.2,
+      duration: 0.8,
       smoothWheel: !isTouchDevice && !reduceMotion,
       syncTouch: false,
       wheelMultiplier: 1,

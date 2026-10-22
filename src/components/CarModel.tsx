@@ -168,6 +168,7 @@ export interface CarModelProps {
   selectedPart?: CarPart | null;
   onPartClick?: (part: CarPart) => void;
   onPartHover?: (part: CarPart | null) => void;
+  onReady?: () => void;
 }
 
 // Default colors for the car
@@ -188,9 +189,24 @@ export function CarModel({
   colors = {},
   onPartClick,
   onPartHover,
+  onReady,
 }: CarModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { nodes, materials } = useGLTF("/models/car.glb") as GLTFResult;
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    // Wait for the model to commit and the canvas to paint before removing its loader.
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => onReadyRef.current?.());
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, []);
 
   // Merge provided colors with defaults
   const activeColors = useMemo(

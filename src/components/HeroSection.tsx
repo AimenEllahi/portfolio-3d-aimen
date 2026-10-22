@@ -108,6 +108,7 @@ export default function HeroSection({
 
   const [fontsReady, setFontsReady] = useState(false);
   const [fontPx, setFontPx] = useState(0);
+  const [nameRevealed, setNameRevealed] = useState(false);
 
   const [maxScaleBoost, setMaxScaleBoost] = useState(45);
   const [heroPinDistanceVh, setHeroPinDistanceVh] = useState(125);
@@ -261,6 +262,12 @@ export default function HeroSection({
 
   useEffect(() => {
     if (!fontsReady || fontPx <= 0) return;
+    const frame = requestAnimationFrame(() => setNameRevealed(true));
+    return () => cancelAnimationFrame(frame);
+  }, [fontsReady, fontPx]);
+
+  useEffect(() => {
+    if (!fontsReady || fontPx <= 0) return;
     const onResize = () => {
       measureAndPrepareFonts();
       requestAnimationFrame(() => {
@@ -373,7 +380,7 @@ export default function HeroSection({
       pin: pinWrap,
       pinSpacing: true,
       anticipatePin: 1,
-      scrub: 1,
+      scrub: 0.4,
       onUpdate: (self) => applyFrame(self.progress),
     });
 
@@ -402,7 +409,7 @@ export default function HeroSection({
       ref={sectionRef}
       id={sectionId}
       className="relative w-full bg-transparent"
-      style={{ height: "100dvh" }}
+      style={{ minHeight: "100dvh" }}
     >
       <h1 className="sr-only">Aimen Qaiser — 3D Frontend Engineer</h1>
       <svg
@@ -460,6 +467,8 @@ export default function HeroSection({
             display: "block",
             maxWidth: "none",
             willChange: "opacity",
+            opacity: nameRevealed ? 1 : 0,
+            transition: "opacity 650ms cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           aria-hidden
           width={typeof window !== "undefined" ? window.innerWidth : 1920}

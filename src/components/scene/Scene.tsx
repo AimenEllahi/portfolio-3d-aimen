@@ -68,7 +68,8 @@ export default function Scene({ onReady }: SceneProps) {
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
-      setActive(!document.hidden && window.scrollY < window.innerHeight * 2);
+      const projectsEnd = document.getElementById("projects")?.getBoundingClientRect().bottom;
+      setActive(!document.hidden && (projectsEnd ?? window.innerHeight * 2) > 0);
       setReduceMotion(motion.matches);
       setCoarsePointer(window.matchMedia("(pointer: coarse)").matches);
     };

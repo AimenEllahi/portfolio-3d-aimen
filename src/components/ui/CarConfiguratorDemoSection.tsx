@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
 import type { CarPart } from "@/components/CarModel";
+import Loader from "@/components/Loader";
 import {
   ConfigurablePart,
   useConfiguratorStore,
@@ -73,13 +75,18 @@ export default function CarConfiguratorDemoSection() {
   const viewerContainerRef = useRef<HTMLDivElement | null>(null);
   const [viewerNear, setViewerNear] = useState(false);
   const [viewerMounted, setViewerMounted] = useState(false);
+  const [viewerReady, setViewerReady] = useState(false);
 
   useEffect(() => {
     const target = viewerContainerRef.current;
     if (!target) return;
     const observer = new IntersectionObserver(([entry]) => {
       setViewerNear(entry.isIntersecting);
-      if (entry.isIntersecting) setViewerMounted(true);
+      // The full car scene can block the main thread while its model initializes.
+      // Keep ordinary mobile scrolling free of that work until the visitor opens it.
+      if (entry.isIntersecting && window.matchMedia("(min-width: 640px)").matches) {
+        setViewerMounted(true);
+      }
     }, { rootMargin: "400px" });
     observer.observe(target);
     return () => observer.disconnect();
@@ -223,15 +230,28 @@ export default function CarConfiguratorDemoSection() {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
           <div ref={viewerContainerRef} className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/95">
             <div ref={viewerPulseRef} className="relative">
-              <div className="aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[560px]">
+              <div className="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[560px]">
+                {!viewerMounted ? (
+                  <Image
+                    src="/car-preview.jpg"
+                    alt="McLaren F1 shown in the interactive car configurator"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 90vw, 800px"
+                    className="object-cover"
+                  />
+                ) : null}
                 {viewerMounted ? <CarConfiguratorScene
                   active={viewerNear}
                   colors={partColors}
                   selectedPart={selectedPart ? (selectedPart as CarPart) : null}
                   onPartClick={handlePartClick}
                   onPartHover={handlePartHover}
+                  onReady={() => setViewerReady(true)}
                 /> : null}
               </div>
+
+              {viewerMounted && !viewerReady ? <Loader /> : null}
 
               <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
 
@@ -268,7 +288,17 @@ export default function CarConfiguratorDemoSection() {
                 Drag to rotate · Scroll to zoom
               </div>
 
-              {!viewerMounted ? <p className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center text-sm text-[var(--muted)]">3D Preview Loads As You Scroll</p> : null}
+              {!viewerMounted ? (
+                <div className="absolute inset-x-0 bottom-0 z-[3] flex justify-center bg-gradient-to-t from-black/85 via-black/30 to-transparent px-4 pb-5 pt-16 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setViewerMounted(true)}
+                    className="min-h-11 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black transition-transform active:scale-95"
+                  >
+                    Open interactive 3D preview
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
 

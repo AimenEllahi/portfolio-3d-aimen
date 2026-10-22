@@ -81,11 +81,13 @@ const HeroSection = dynamic(() => import("@/components/HeroSection"), {
   loading: () => (
     <section
       id="home"
-      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 bg-black px-4 text-center"
+      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-4 bg-black px-4 text-center"
     >
-      <h1 className="font-monument text-[clamp(2.8rem,14vw,11rem)] font-bold leading-[0.95] tracking-tight text-[#b4dfd2]">AIMEN<br />QAISER</h1>
-      <p className="text-xs uppercase tracking-[0.2em] text-white/75 sm:text-sm">3D Frontend Engineer · Creative Developer</p>
-      <a href="#projects" className="rounded-full border border-[var(--accent)] px-5 py-2 text-sm text-[var(--accent)]">Explore Work ↓</a>
+      <div role="status" className="flex flex-col items-center gap-4 text-[var(--accent)]">
+        <span className="font-monument text-3xl font-bold tracking-tight">AQ</span>
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)]/20 border-t-[var(--accent)]" aria-hidden="true" />
+        <span className="text-xs uppercase tracking-[0.2em] text-white/60">Loading experience</span>
+      </div>
     </section>
   ),
 });

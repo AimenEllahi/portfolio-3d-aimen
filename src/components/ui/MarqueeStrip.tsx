@@ -124,7 +124,7 @@ function MarqueeRow({
 export default function MarqueeStrip() {
   return (
     <div
-      className="relative z-10 w-full overflow-hidden border-y border-white/[0.05] bg-[var(--bg)]/80 backdrop-blur-sm"
+      className="relative z-10 w-full overflow-hidden border-y border-white/[0.05] bg-[var(--bg)]/40"
       aria-label="Technology stack"
     >
       <div className="border-b border-white/[0.04] py-3 sm:py-4">

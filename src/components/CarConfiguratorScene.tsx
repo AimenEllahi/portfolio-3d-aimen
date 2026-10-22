@@ -17,6 +17,7 @@ interface CarConfiguratorSceneProps {
   selectedPart?: CarPart | null;
   onPartClick?: (part: CarPart) => void;
   onPartHover?: (part: CarPart | null) => void;
+  onReady?: () => void;
   className?: string;
 }
 
@@ -53,6 +54,7 @@ export function CarConfiguratorScene({
   selectedPart,
   onPartClick,
   onPartHover,
+  onReady,
   className = "",
 }: CarConfiguratorSceneProps) {
   const isMobile = useIsMobile();
@@ -120,6 +122,7 @@ export function CarConfiguratorScene({
               selectedPart={selectedPart}
               onPartClick={onPartClick}
               onPartHover={onPartHover}
+              onReady={onReady}
             />
           </PresentationControls>
         </Suspense>

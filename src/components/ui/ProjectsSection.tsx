@@ -348,7 +348,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   return (
     <section
       id="projects"
-      className="relative z-10 border-t border-[var(--border)] bg-[var(--bg)]"
+      className="relative z-10 border-t border-[var(--border)] bg-[color:rgba(5,5,8,0.58)]"
       style={{ perspective: "1200px" }}
     >
       <div className="mx-auto flex w-full max-w-[1104px] flex-col px-4 pt-12 pb-20 sm:px-6 sm:pt-14 sm:pb-24 lg:pt-16 lg:pb-28">

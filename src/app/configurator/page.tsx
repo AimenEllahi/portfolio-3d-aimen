@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import CarConfiguratorScene from "@/components/CarConfiguratorScene";
+import Loader from "@/components/Loader";
 import Navbar from "@/components/ui/Navbar";
 import { CarPart } from "@/components/CarModel";
 import {
@@ -92,6 +93,7 @@ export default function ConfiguratorPage() {
   const [showPalette, setShowPalette] = useState(false);
   const [showPaletteHint, setShowPaletteHint] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [sceneReady, setSceneReady] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -247,6 +249,7 @@ export default function ConfiguratorPage() {
               Desktop: rounded card inside grid (col-span-2). */}
           <div
             ref={viewerRef}
+            aria-busy={!sceneReady}
             className="relative h-[52vh] min-h-[260px] max-h-[420px] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] sm:max-h-[520px] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:max-h-none lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
           >
             <CarConfiguratorScene
@@ -254,7 +257,9 @@ export default function ConfiguratorPage() {
               selectedPart={selectedPart}
               onPartClick={handlePartClick}
               onPartHover={handlePartHover}
+              onReady={() => setSceneReady(true)}
             />
+            {!sceneReady ? <Loader /> : null}
 
             {/* Floating palette toggle button */}
             <div className="absolute right-4 bottom-4 z-[30] flex items-end">
@@ -479,17 +484,21 @@ export default function ConfiguratorPage() {
                       <button
                         key={color.id}
                         onClick={() => handleColorChange(color.value)}
-                        className={`group relative w-full aspect-square rounded-xl border-2 transition-all duration-300 hover:scale-110 ${
-                          partColors[selectedPart] === color.value
-                            ? "border-white shadow-lg shadow-white/20 scale-110"
-                            : "border-white/20 hover:border-white/40"
-                        }`}
-                        style={{ backgroundColor: color.value }}
+                        aria-pressed={partColors[selectedPart] === color.value}
+                        className="group flex min-w-0 flex-col items-center gap-1.5 rounded-lg p-1 text-center focus-visible:outline-offset-0"
                         title={color.name}
                         aria-label={`Select ${color.name}`}
                       >
-                        {partColors[selectedPart] === color.value && (
-                          <div className="absolute inset-0 flex items-center justify-center">
+                        <span
+                          className={`relative block aspect-square w-full rounded-xl border-2 transition-transform duration-200 group-hover:scale-105 ${
+                            partColors[selectedPart] === color.value
+                              ? "border-white shadow-lg shadow-white/20"
+                              : "border-white/20 group-hover:border-white/50"
+                          }`}
+                          style={{ backgroundColor: color.value }}
+                        >
+                          {partColors[selectedPart] === color.value ? (
+                            <span className="absolute inset-0 flex items-center justify-center">
                             <svg
                               className="w-5 h-5 text-white drop-shadow-lg"
                               fill="currentColor"
@@ -501,9 +510,10 @@ export default function ConfiguratorPage() {
                                 clipRule="evenodd"
                               />
                             </svg>
-                          </div>
-                        )}
-                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="text-[10px] leading-tight text-white/75 group-hover:text-white">
                           {color.name}
                         </span>
                       </button>

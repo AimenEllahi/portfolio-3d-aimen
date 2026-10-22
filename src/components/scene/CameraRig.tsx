@@ -18,14 +18,18 @@ export default function CameraRig() {
 
     const easeZoom = gsap.parseEase("power2.inOut");
 
-    const updateCamera = (progress: number) => {
-      const easedProgress = easeZoom(progress);
-      camera.position.set(0, 0, 8 - easedProgress * 9.4);
-      lookAtTarget.set(0, 0, -1.8 - easedProgress * 1.2);
+    let heroProgress = 0;
+    let projectsProgress = 0;
+    const updateCamera = () => {
+      const zoom = easeZoom(heroProgress);
+      const returnToModel = gsap.parseEase("power2.out")(projectsProgress);
+      camera.position.set(0, 0, 8 - zoom * 9.4 * (1 - returnToModel));
+      lookAtTarget.set(0, 0, -1.8 - zoom * 1.2 * (1 - returnToModel));
       camera.lookAt(lookAtTarget);
     };
 
-    let trigger: ScrollTrigger | null = null;
+    let heroTrigger: ScrollTrigger | null = null;
+    let projectsTrigger: ScrollTrigger | null = null;
     let raf = 0;
 
     const attachWhenReady = () => {
@@ -35,17 +39,33 @@ export default function CameraRig() {
         return;
       }
 
-      trigger = ScrollTrigger.create({
+      heroTrigger = ScrollTrigger.create({
         trigger: el,
         start: "top top",
         end: "bottom bottom",
-        scrub: 1,
+        scrub: 0.4,
         onUpdate: (self) => {
-          updateCamera(self.progress);
+          heroProgress = self.progress;
+          updateCamera();
         },
       });
 
-      updateCamera(trigger.progress);
+      const projects = document.getElementById("projects");
+      if (projects) {
+        projectsTrigger = ScrollTrigger.create({
+          trigger: projects,
+          start: "top bottom",
+          end: "top 60%",
+          scrub: 0.4,
+          onUpdate: (self) => {
+            projectsProgress = self.progress;
+            updateCamera();
+          },
+        });
+        projectsProgress = projectsTrigger.progress;
+      }
+      heroProgress = heroTrigger.progress;
+      updateCamera();
       ScrollTrigger.refresh();
     };
 
@@ -53,7 +73,8 @@ export default function CameraRig() {
 
     return () => {
       cancelAnimationFrame(raf);
-      trigger?.kill();
+      heroTrigger?.kill();
+      projectsTrigger?.kill();
     };
   }, [camera, lookAtTarget]);
 
