@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/ui/AboutSection";
 import ContactSection from "@/components/ui/ContactSection";
 import Navigation from "@/components/ui/Navbar";
@@ -76,29 +77,15 @@ const Scene = dynamic(() => import("@/components/scene/Scene"), {
   ssr: false,
 });
 
-const HeroSection = dynamic(() => import("@/components/HeroSection"), {
-  ssr: false,
-  loading: () => (
-    <section
-      id="home"
-      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-4 bg-black px-4 text-center"
-    >
-      <div role="status" className="flex flex-col items-center gap-4 text-[var(--accent)]">
-        <span className="font-monument text-3xl font-bold tracking-tight">AQ</span>
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)]/20 border-t-[var(--accent)]" aria-hidden="true" />
-        <span className="text-xs uppercase tracking-[0.2em] text-white/60">Loading experience</span>
-      </div>
-    </section>
-  ),
-});
-
 export default function Home() {
   return (
     <>
       <main id="main-content" className="relative z-10 bg-transparent">
         <Scene />
-        <ChatComingSoon />
-        <Navigation />
+        <div data-hero-chrome style={{ opacity: 0, visibility: "hidden" }}>
+          <ChatComingSoon />
+          <Navigation />
+        </div>
         <HeroSection sectionId="home" />
         <MarqueeStrip />
         <ProjectsSection projects={PROJECTS_DATA} />

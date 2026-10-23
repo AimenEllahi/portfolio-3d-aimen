@@ -13,12 +13,33 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLenis } from "@/components/SmoothScrollProvider";
 import { heroPinDistanceVhForWidth } from "@/lib/heroMotion";
+import styles from "./HeroLetters.module.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TEST_FONT_PX = 100;
 const LETTER_TRACK = 0.02;
-const NAME_LINES = ["AIMEN", "QAISER"] as const;
+const HERO_NAME = "AIMEN";
+const HERO_NAME_Y = 0.49;
+
+function smoothStep01(value: number) {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * (3 - 2 * t);
+}
+
+function buildWavePath(width: number, height: number) {
+  const start = -width;
+  const end = width * 2;
+  const amplitude = Math.max(3, Math.min(9, width * 0.006));
+  const wavelength = width * 0.48;
+  const points = 72;
+  let path = `M ${start} 0`;
+  for (let index = 1; index <= points; index += 1) {
+    const x = start + ((end - start) * index) / points;
+    const y = Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
+    path += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  return `${path} L ${end} ${height * 3} L ${start} ${height * 3} Z`;
+}
 
 function readHeroScaleOrigin(
   iw: number,
@@ -72,7 +93,7 @@ export default function HeroSection({
 }: HeroSectionProps) {
   const rawId = useId().replace(/:/g, "");
   const maskId = `hero-name-mask-${rawId}`;
-  const glowId = `hero-name-glow-${rawId}`;
+  const liquidClipId = `hero-liquid-clip-${rawId}`;
 
   const sectionRef = useRef<HTMLElement>(null);
   const pinWrapRef = useRef<HTMLDivElement>(null);
@@ -80,17 +101,22 @@ export default function HeroSection({
   const maskLayerRef = useRef<SVGRectElement>(null);
   const textGroupRef = useRef<SVGGElement>(null);
   const visibleTextGroupRef = useRef<SVGGElement>(null);
+  const productStageRef = useRef<HTMLDivElement>(null);
+  const productPositionRef = useRef<HTMLDivElement>(null);
+  const productWordRef = useRef<HTMLDivElement>(null);
+  const liquidSvgRef = useRef<SVGSVGElement>(null);
+  const liquidClipTextRef = useRef<SVGTextElement>(null);
+  const liquidWaveRef = useRef<SVGPathElement>(null);
+  const productRotatorsRef = useRef<Array<HTMLSpanElement | null>>([]);
+  const productFrontsRef = useRef<Array<HTMLSpanElement | null>>([]);
+  const flipTweensRef = useRef<gsap.core.Tween[]>([]);
+  const touchWaveRef = useRef<gsap.core.Timeline | null>(null);
   const heroIntroRef = useRef<HTMLDivElement>(null);
-  const nameGradientRef = useRef<SVGRadialGradientElement>(null);
-  const measureLine1Ref = useRef<SVGTextElement>(null);
-  const measureLine2Ref = useRef<SVGTextElement>(null);
   const svgMaskRootRef = useRef<SVGSVGElement>(null);
   const maskWhiteRectRef = useRef<SVGRectElement>(null);
   const maskElementRef = useRef<SVGMaskElement>(null);
   const textLine1Ref = useRef<SVGTextElement>(null);
-  const textLine2Ref = useRef<SVGTextElement>(null);
   const visibleLine1Ref = useRef<SVGTextElement>(null);
-  const visibleLine2Ref = useRef<SVGTextElement>(null);
   const mLetterRef = useRef<SVGTSpanElement | null>(null);
   /** Center of letter "M" in mask SVG units — zoom feels like diving into that glyph */
   const scaleOriginRef = useRef<{ x: number; y: number }>({
@@ -103,10 +129,14 @@ export default function HeroSection({
 
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
   const floatStrengthRef = useRef(1);
+  const handoffRef = useRef(1);
+  const idleLayerHiddenRef = useRef(false);
+  const introCompleteRef = useRef(false);
+  const introRevealRef = useRef(0);
 
   const [fontsReady, setFontsReady] = useState(false);
   const [fontPx, setFontPx] = useState(0);
-  const [nameRevealed, setNameRevealed] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
 
   const [maxScaleBoost, setMaxScaleBoost] = useState(45);
 
@@ -131,19 +161,20 @@ export default function HeroSection({
     const w = window.innerWidth;
     const h = window.innerHeight;
     const svg = svgMaskRootRef.current;
+    const liquidSvg = liquidSvgRef.current;
     const rect = maskWhiteRectRef.current;
     const maskEl = maskElementRef.current;
     const maskRect = maskLayerRef.current;
     const t1 = textLine1Ref.current;
-    const t2 = textLine2Ref.current;
     const v1 = visibleLine1Ref.current;
-    const v2 = visibleLine2Ref.current;
     if (!svg || !rect || !maskEl) return;
 
     maskEl.setAttribute("mask-type", "luminance");
     svg.setAttribute("width", String(w));
     svg.setAttribute("height", String(h));
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    if (liquidSvg) liquidSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    liquidWaveRef.current?.setAttribute("d", buildWavePath(w, h));
 
     maskEl.setAttribute("width", String(w));
     maskEl.setAttribute("height", String(h));
@@ -155,71 +186,48 @@ export default function HeroSection({
     rect.setAttribute("width", String(w));
     rect.setAttribute("height", String(h));
 
-    /** Mobile screens get tighter vertical spacing so the two name
-     *  lines don't drift apart visually. Desktop layout unchanged. */
-    const isMobile = w < 640;
-    const aimenY = isMobile ? h * 0.43 : h * 0.31;
-    const qaiserY = isMobile ? h * 0.57 : h * 0.61;
+    const nameY = h * HERO_NAME_Y;
 
     if (t1 && fontPx > 0) {
       t1.setAttribute("x", String(w / 2));
-      t1.setAttribute("y", String(aimenY));
+      t1.setAttribute("y", String(nameY));
     }
-    if (t2 && fontPx > 0) {
-      t2.setAttribute("x", String(w / 2));
-      t2.setAttribute("y", String(qaiserY));
+    if (v1) {
+      v1.setAttribute("x", String(w / 2));
+      v1.setAttribute("y", String(nameY));
     }
-    if (v1) { v1.setAttribute("x", String(w / 2)); v1.setAttribute("y", String(aimenY)); }
-    if (v2) { v2.setAttribute("x", String(w / 2)); v2.setAttribute("y", String(qaiserY)); }
+    const liquidText = liquidClipTextRef.current;
+    if (liquidText) {
+      liquidText.setAttribute("x", String(w / 2));
+      liquidText.setAttribute("y", String(nameY));
+    }
+
+    const word = productWordRef.current;
+    if (word && fontPx > 0) {
+      const width = word.offsetWidth;
+      for (const text of [t1, v1, liquidText]) {
+        if (!text) continue;
+        text.setAttribute("textLength", String(width));
+        text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      }
+    }
   }, [fontPx]);
 
   const measureAndPrepareFonts = useCallback(async () => {
     await document.fonts.ready.catch(() => undefined);
-    try {
-      let attempts = 0;
-      let w1 = 0;
-      let w2 = 0;
-      while (attempts < 15) {
-        const t1 = measureLine1Ref.current;
-        const t2 = measureLine2Ref.current;
-        if (t1 && t2) {
-          w1 = t1.getComputedTextLength();
-          w2 = t2.getComputedTextLength();
-          if (w1 > 0 && w2 > 0) break;
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 100));
-        attempts += 1;
-      }
-      const maxW = Math.max(w1, w2);
-      if (maxW <= 0) {
-        const iw = window.innerWidth;
-        setFontPx(Math.round(iw * 0.21));
-        setFontsReady(true);
-        return;
-      }
-      const iw = window.innerWidth;
-      const inset = iw < 480 ? 0.86 : iw < 768 ? 0.88 : 0.9;
-      const scale = (iw * inset) / maxW;
-      const finalSize = Math.round(TEST_FONT_PX * scale);
-      const px = Math.max(32, Math.min(finalSize, 520));
-      setFontPx(px);
-      setFontsReady(true);
-    } catch {
-      setFontPx(120);
-      setFontsReady(true);
-    }
+    const word = productWordRef.current;
+    const measuredSize = word ? parseFloat(window.getComputedStyle(word).fontSize) : 0;
+    setFontPx(measuredSize > 0 ? measuredSize : Math.max(32, window.innerWidth * 0.22));
+    setFontsReady(true);
   }, []);
 
   useLayoutEffect(() => {
     if (!fontsReady || fontPx <= 0) return;
     const line1 = textLine1Ref.current;
-    const line2 = textLine2Ref.current;
-    if (line1 && line2) {
+    if (line1) {
       line1.setAttribute("font-size", String(fontPx));
-      line2.setAttribute("font-size", String(fontPx));
       const track = fontPx * LETTER_TRACK;
       line1.setAttribute("letter-spacing", `${track}px`);
-      line2.setAttribute("letter-spacing", `${track}px`);
     }
     syncSvgMaskGeometry();
   }, [fontsReady, fontPx, syncSvgMaskGeometry]);
@@ -249,35 +257,51 @@ export default function HeroSection({
     };
   }, [measureAndPrepareFonts]);
 
-  useEffect(() => {
-    if (!fontsReady || fontPx <= 0) return;
-    const frame = requestAnimationFrame(() => setNameRevealed(true));
-    return () => cancelAnimationFrame(frame);
-  }, [fontsReady, fontPx]);
+  const isNameInteractive = useCallback(
+    () => introCompleteRef.current && handoffRef.current > 0.98,
+    [],
+  );
+
+  const syncProductStage = useCallback(() => {
+    const stage = productStageRef.current;
+    if (stage) stage.style.opacity = String(handoffRef.current);
+    const position = productPositionRef.current;
+    if (position) {
+      position.style.pointerEvents = isNameInteractive() ? "auto" : "none";
+    }
+  }, [isNameInteractive]);
+
+  const syncIntro = useCallback(() => {
+    const intro = heroIntroRef.current;
+    if (!intro) return;
+    const progress = scrollTriggerRef.current?.progress ?? 0;
+    intro.style.opacity = String(introRevealRef.current * Math.max(0, 1 - progress / 0.16));
+    intro.style.pointerEvents = introRevealRef.current > 0.9 && progress < 0.1 ? "auto" : "none";
+  }, []);
 
   useEffect(() => {
-    if (!fontsReady || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!fontsReady || !introComplete || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const section = sectionRef.current;
     if (!section) return;
 
     const tweens: gsap.core.Tween[] = [];
     const context = gsap.context(() => {
-      NAME_LINES.forEach((line, lineIndex) => {
-        Array.from(line).forEach((_, letterIndex) => {
-          const letters = section.querySelectorAll<SVGTSpanElement>(
-            `[data-hero-letter="${lineIndex}-${letterIndex}"]`,
-          );
-          tweens.push(gsap.to(letters, {
+      Array.from(HERO_NAME).forEach((_, letterIndex) => {
+        const letters = section.querySelectorAll<Element>(
+          `[data-hero-letter="0-${letterIndex}"]`,
+        );
+        tweens.push(
+          gsap.to(letters, {
             y: (letterIndex % 2 === 0 ? -1 : 1) * (2.5 + (letterIndex % 3) * 0.5),
-            duration: 2.8 + (letterIndex % 4) * 0.35 + lineIndex * 0.2,
+            duration: (2.8 + (letterIndex % 4) * 0.35) / 1.2,
             ease: "sine.inOut",
             repeat: -1,
             yoyo: true,
             modifiers: {
               y: (value) => `${parseFloat(value) * floatStrengthRef.current}px`,
             },
-          }));
-        });
+          }),
+        );
       });
     }, section);
     const observer = new IntersectionObserver(([entry]) => {
@@ -288,77 +312,184 @@ export default function HeroSection({
       observer.disconnect();
       context.revert();
     };
-  }, [fontsReady]);
+  }, [fontsReady, introComplete]);
 
   useEffect(() => {
+    if (!fontsReady || !introComplete) return;
     const section = sectionRef.current;
-    const gradient = nameGradientRef.current;
-    if (!section || !gradient) return;
+    const word = productWordRef.current;
+    if (!section || !word) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) return;
+    const rotators = productRotatorsRef.current.filter((node): node is HTMLSpanElement => Boolean(node));
+    const fronts = productFrontsRef.current.filter((node): node is HTMLSpanElement => Boolean(node));
+    const buttons = Array.from(section.querySelectorAll<HTMLButtonElement>("[data-hero-product-letter]"));
+    if (rotators.length !== HERO_NAME.length || fronts.length !== HERO_NAME.length) return;
 
-    let frame = 0;
-    let lastFrame = 0;
-    let lastPointerMove = -Infinity;
-    let inView = false;
-    let x = window.innerWidth * 0.5;
-    let y = window.innerHeight * 0.46;
-    let targetX = x;
-    let targetY = y;
+    const mm = gsap.matchMedia();
+    mm.add({
+      desktop: "(hover: hover) and (pointer: fine)",
+      touch: "(pointer: coarse)",
+      reducedMotion: "(prefers-reduced-motion: reduce)",
+    }, (context) => {
+      const { desktop, touch, reducedMotion } = context.conditions as {
+        desktop: boolean;
+        touch: boolean;
+        reducedMotion: boolean;
+      };
+      gsap.set(rotators, { rotationY: 0, transformPerspective: 1000 });
+      if (reducedMotion) return;
 
-    const syncRadius = () => {
-      gradient.setAttribute("r", String(Math.max(window.innerWidth * 0.55, window.innerHeight * 0.7)));
-    };
-    syncRadius();
+      if (desktop) {
+        const flips = rotators.map((rotator) => gsap.to(rotator, {
+          rotationY: 180,
+          duration: 0.62,
+          ease: "power2.inOut",
+          paused: true,
+        }));
+        flipTweensRef.current = flips;
+        let hitMap: {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+          pixels: Uint8ClampedArray;
+        } | null = null;
+        let activeIndex = -1;
+        let leaveTimer = 0;
+        let resizeFrame = 0;
 
-    const tick = (now: number) => {
-      if (now - lastFrame >= 32) {
-        if (now - lastPointerMove > 2200) {
-          targetX = window.innerWidth * (0.5 + 0.28 * Math.sin(now * 0.00042));
-          targetY = window.innerHeight * (0.46 + 0.16 * Math.sin(now * 0.00061 + 1));
-        }
-        x += (targetX - x) * 0.1;
-        y += (targetY - y) * 0.1;
-        gradient.setAttribute("cx", x.toFixed(1));
-        gradient.setAttribute("cy", y.toFixed(1));
-        lastFrame = now;
+        const buildHitMap = () => {
+          const wordBounds = word.getBoundingClientRect();
+          const width = Math.ceil(wordBounds.width);
+          const height = Math.ceil(wordBounds.height);
+          if (!width || !height) return;
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return;
+          ctx.textBaseline = "top";
+          const fit = wordBounds.width / word.offsetWidth;
+          buttons.forEach((button, index) => {
+            const bounds = button.getBoundingClientRect();
+            const style = window.getComputedStyle(button);
+            const size = parseFloat(style.fontSize);
+            ctx.save();
+            ctx.translate(bounds.left - wordBounds.left, bounds.top - wordBounds.top + size * 0.05);
+            ctx.scale(fit, 1);
+            ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+            ctx.fillStyle = `rgb(${(index + 1) * 40}, 0, 0)`;
+            ctx.fillText(HERO_NAME[index], 0, 0);
+            ctx.restore();
+          });
+          hitMap = {
+            x: wordBounds.left,
+            y: wordBounds.top,
+            width,
+            height,
+            pixels: ctx.getImageData(0, 0, width, height).data,
+          };
+        };
+
+        const hitLetterAt = (x: number, y: number) => {
+          if (!hitMap) return -1;
+          const px = Math.floor(x - hitMap.x);
+          const py = Math.floor(y - hitMap.y);
+          if (px < 0 || py < 0 || px >= hitMap.width || py >= hitMap.height) return -1;
+          const offset = (py * hitMap.width + px) * 4;
+          if (hitMap.pixels[offset + 3] < 32) return -1;
+          return Math.round(hitMap.pixels[offset] / 40) - 1;
+        };
+
+        const onPointerMove = (event: PointerEvent) => {
+          if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+          const nextIndex = isNameInteractive() ? hitLetterAt(event.clientX, event.clientY) : -1;
+          if (nextIndex === activeIndex) {
+            if (leaveTimer) window.clearTimeout(leaveTimer);
+            leaveTimer = 0;
+            if (nextIndex >= 0 && flips[nextIndex].paused() && flips[nextIndex].progress() === 0) {
+              flips[nextIndex].play();
+            }
+            return;
+          }
+          if (nextIndex < 0 && activeIndex >= 0) {
+            if (!leaveTimer) {
+              leaveTimer = window.setTimeout(() => {
+                flips[activeIndex]?.reverse();
+                activeIndex = -1;
+                leaveTimer = 0;
+                word.style.cursor = "";
+              }, 90);
+            }
+            return;
+          }
+          if (leaveTimer) window.clearTimeout(leaveTimer);
+          leaveTimer = 0;
+          if (activeIndex >= 0) flips[activeIndex].reverse();
+          activeIndex = nextIndex;
+          if (activeIndex >= 0) {
+            flips[activeIndex].play();
+            word.style.cursor = "pointer";
+          }
+        };
+
+        const onResize = () => {
+          window.cancelAnimationFrame(resizeFrame);
+          resizeFrame = window.requestAnimationFrame(buildHitMap);
+        };
+        buildHitMap();
+        window.addEventListener("pointermove", onPointerMove, { passive: true });
+        window.addEventListener("resize", onResize, { passive: true });
+        const removeListeners = buttons.map((button, index) => {
+          const play = () => {
+            if (isNameInteractive()) flips[index].play();
+          };
+          const reverse = () => flips[index].reverse();
+          button.addEventListener("focus", play);
+          button.addEventListener("blur", reverse);
+          return () => {
+            button.removeEventListener("focus", play);
+            button.removeEventListener("blur", reverse);
+          };
+        });
+        return () => {
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("resize", onResize);
+          window.cancelAnimationFrame(resizeFrame);
+          if (leaveTimer) window.clearTimeout(leaveTimer);
+          word.style.cursor = "";
+          removeListeners.forEach((remove) => remove());
+          flipTweensRef.current = [];
+        };
       }
-      frame = requestAnimationFrame(tick);
-    };
 
-    const syncFrame = () => {
-      const shouldRun = inView && !document.hidden && window.scrollY < 4;
-      if (shouldRun && !frame) frame = requestAnimationFrame(tick);
-      if (!shouldRun && frame) {
-        cancelAnimationFrame(frame);
-        frame = 0;
+      if (touch) {
+        const wave = gsap.timeline({ paused: true });
+        wave
+          .to(rotators, { rotationY: 22, duration: 0.25, ease: "power2.out", stagger: 0.065 }, 0)
+          .to(fronts, { color: "#6ef0c8", y: -3, duration: 0.25, ease: "power2.out", stagger: 0.065 }, 0)
+          .to(rotators, { rotationY: 0, duration: 0.4, ease: "power3.out", stagger: 0.065 }, 0.28)
+          .to(fronts, { color: "#edf5ef", y: 0, duration: 0.4, ease: "power3.out", stagger: 0.065 }, 0.28);
+        touchWaveRef.current = wave;
+        const playWave = () => {
+          if (isNameInteractive()) wave.restart();
+        };
+        word.addEventListener("click", playWave);
+        const introTimer = window.setTimeout(playWave, 900);
+        return () => {
+          word.removeEventListener("click", playWave);
+          window.clearTimeout(introTimer);
+          touchWaveRef.current = null;
+        };
       }
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      syncFrame();
-    });
-    const onPointerMove = (event: PointerEvent) => {
-      if (!inView || event.pointerType === "touch") return;
-      targetX = event.clientX;
-      targetY = event.clientY;
-      lastPointerMove = performance.now();
-    };
-    observer.observe(section);
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("scroll", syncFrame, { passive: true });
-    window.addEventListener("resize", syncRadius, { passive: true });
-    document.addEventListener("visibilitychange", syncFrame);
+    }, section);
+
     return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("scroll", syncFrame);
-      window.removeEventListener("resize", syncRadius);
-      document.removeEventListener("visibilitychange", syncFrame);
+      mm.revert();
+      flipTweensRef.current = [];
+      touchWaveRef.current = null;
     };
-  }, []);
+  }, [fontsReady, fontPx, introComplete, isNameInteractive]);
 
   useEffect(() => {
     if (!fontsReady || fontPx <= 0) return;
@@ -399,6 +530,17 @@ export default function HeroSection({
     if (!section || !pinWrap || !textG || !maskLayer) return;
 
     const applyFrame = (p: number) => {
+      const handoff = smoothStep01((p - 0.025) / 0.135);
+      handoffRef.current = 1 - handoff;
+      syncProductStage();
+      if (handoff >= 0.999 && !idleLayerHiddenRef.current) {
+        flipTweensRef.current.forEach((flip) => flip.pause(0));
+        touchWaveRef.current?.pause(0);
+        idleLayerHiddenRef.current = true;
+      } else if (handoff < 0.999) {
+        idleLayerHiddenRef.current = false;
+      }
+
       // Keep the idle float intact at the start of the scroll, then ease it out
       // before the enlarged letters make that movement noticeable.
       const floatFade = gsap.utils.clamp(0, 1, (p - 0.08) / 0.24);
@@ -412,7 +554,7 @@ export default function HeroSection({
       );
       if (visibleTextGroupRef.current) {
         visibleTextGroupRef.current.setAttribute("transform", textG.getAttribute("transform") ?? "");
-        visibleTextGroupRef.current.style.opacity = String(Math.max(0, 0.78 * (1 - p / 0.55)));
+        visibleTextGroupRef.current.style.opacity = String(Math.max(0, 0.78 * handoff * (1 - p / 0.55)));
       }
 
       maskLayer.style.transition = "";
@@ -436,7 +578,7 @@ export default function HeroSection({
         maskLayer.setAttribute("visibility", "visible");
       }
 
-      if (heroIntroRef.current) heroIntroRef.current.style.opacity = String(Math.max(0, 1 - p / 0.16));
+      syncIntro();
 
       const blurBackdrop = backdropBlurLayerRef.current;
       if (blurBackdrop && window.innerWidth >= 768) {
@@ -500,53 +642,82 @@ export default function HeroSection({
       scrollTriggerRef.current?.kill();
       scrollTriggerRef.current = null;
     };
-  }, [fontsReady, maxScaleBoost]);
+  }, [fontsReady, maxScaleBoost, syncProductStage, syncIntro]);
+
+  useEffect(() => {
+    if (!fontsReady || fontPx <= 0 || introCompleteRef.current) return;
+
+    const section = sectionRef.current;
+    const stage = productStageRef.current;
+    const liquid = liquidSvgRef.current;
+    const wave = liquidWaveRef.current;
+    const name = textLine1Ref.current;
+    const chrome = document.querySelector<HTMLElement>("[data-hero-chrome]");
+    if (!section || !stage || !liquid || !wave || !name) return;
+
+    const finishIntro = () => {
+      gsap.set(stage, { y: 0, scale: 1 });
+      gsap.set(liquid, { opacity: 0 });
+      if (chrome) gsap.set(chrome, { autoAlpha: 1 });
+      section.style.zIndex = "20";
+      introRevealRef.current = 1;
+      introCompleteRef.current = true;
+      syncIntro();
+      syncProductStage();
+      setIntroComplete(true);
+    };
+
+    const shouldSkip = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      || window.scrollY > 20
+      || (window.location.hash !== "" && window.location.hash !== "#home");
+    if (shouldSkip) {
+      finishIntro();
+      return;
+    }
+
+    const bounds = name.getBBox();
+    const bottom = bounds.y + bounds.height + 12;
+    const top = bounds.y - 12;
+    gsap.set(wave, { x: 0, y: bottom });
+    gsap.set(liquid, { opacity: 1 });
+
+    const waveDrift = gsap.to(wave, {
+      x: -window.innerWidth * 0.48,
+      duration: 3.2,
+      ease: "none",
+      repeat: -1,
+    });
+    const timeline = gsap.timeline({ onComplete: finishIntro });
+    timeline
+      .to(wave, { y: top, duration: 2, ease: "sine.inOut" })
+      .to(wave, { y: top - 3, duration: 0.2, ease: "sine.out" })
+      .to(liquid, { opacity: 0, duration: 0.28, ease: "power2.inOut" })
+      .to(stage, { y: 0, scale: 1, duration: 0.52, ease: "power2.inOut" }, "<")
+      .call(() => { section.style.zIndex = "20"; }, [], "<")
+      .to(introRevealRef, {
+        current: 1,
+        duration: 0.42,
+        ease: "power2.out",
+        onUpdate: syncIntro,
+      }, "<0.08");
+    if (chrome) {
+      timeline.to(chrome, { autoAlpha: 1, duration: 0.42, ease: "power2.out" }, "<");
+    }
+
+    return () => {
+      timeline.kill();
+      waveDrift.kill();
+    };
+  }, [fontsReady, fontPx, syncIntro, syncProductStage]);
 
   return (
     <section
       ref={sectionRef}
       id={sectionId}
-      className="relative z-20 w-full bg-transparent"
+      className="relative z-[200] w-full bg-transparent"
       style={{ minHeight: "100dvh" }}
     >
-      <h1 className="sr-only">Aimen Qaiser — 3D Frontend Engineer</h1>
-      <svg
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: "-9999px",
-          top: "-9999px",
-          width: "2000px",
-          height: "200px",
-          opacity: 0,
-          pointerEvents: "none",
-          overflow: "visible",
-        }}
-      >
-        <text
-          ref={measureLine1Ref}
-          x={0}
-          y={0}
-          style={{
-            ...textStyle(TEST_FONT_PX),
-            textAnchor: "start",
-          }}
-        >
-          AIMEN
-        </text>
-        <text
-          ref={measureLine2Ref}
-          x={0}
-          y={0}
-          style={{
-            ...textStyle(TEST_FONT_PX),
-            textAnchor: "start",
-          }}
-        >
-          QAISER
-        </text>
-      </svg>
-
+      <h1 className="sr-only">Aimen — 3D Frontend Engineer</h1>
       <div
         ref={pinWrapRef}
         className="relative flex h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-transparent"
@@ -565,32 +736,14 @@ export default function HeroSection({
             display: "block",
             maxWidth: "none",
             willChange: "opacity",
-            opacity: nameRevealed ? 1 : 0,
-            transition: "opacity 650ms cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           aria-hidden
-          width={typeof window !== "undefined" ? window.innerWidth : 1920}
-          height={typeof window !== "undefined" ? window.innerHeight : 1080}
-          viewBox={
-            typeof window !== "undefined"
-              ? `0 0 ${window.innerWidth} ${window.innerHeight}`
-              : "0 0 1920 1080"
-          }
+          width={1920}
+          height={1080}
+          viewBox="0 0 1920 1080"
           preserveAspectRatio="none"
         >
           <defs>
-            <radialGradient
-              ref={nameGradientRef}
-              id={glowId}
-              gradientUnits="userSpaceOnUse"
-              cx={typeof window !== "undefined" ? window.innerWidth * 0.5 : 960}
-              cy={typeof window !== "undefined" ? window.innerHeight * 0.46 : 497}
-              r={typeof window !== "undefined" ? Math.max(window.innerWidth * 0.55, window.innerHeight * 0.7) : 1056}
-            >
-              <stop offset="0%" stopColor="#f3fff8" />
-              <stop offset="38%" stopColor="#b4f9e0" />
-              <stop offset="100%" stopColor="#80ab9d" />
-            </radialGradient>
             <mask
               ref={maskElementRef}
               id={maskId}
@@ -598,67 +751,30 @@ export default function HeroSection({
               maskContentUnits="userSpaceOnUse"
               x={0}
               y={0}
-              width={
-                typeof window !== "undefined" ? window.innerWidth : 1920
-              }
-              height={
-                typeof window !== "undefined" ? window.innerHeight : 1080
-              }
+              width={1920}
+              height={1080}
             >
               <rect
                 ref={maskWhiteRectRef}
                 x={0}
                 y={0}
-                width={
-                  typeof window !== "undefined" ? window.innerWidth : 1920
-                }
-                height={
-                  typeof window !== "undefined" ? window.innerHeight : 1080
-                }
+                width={1920}
+                height={1080}
                 fill="white"
               />
               <g ref={textGroupRef}>
                 {fontsReady && fontPx > 0 ? (
-                  <>
-                    <text
-                      ref={textLine1Ref}
-                      x={
-                        typeof window !== "undefined"
-                          ? window.innerWidth / 2
-                          : 960
-                      }
-                      y={
-                        typeof window !== "undefined"
-                          ? window.innerHeight * 0.31
-                          : 335
-                      }
-                      fill="black"
-                      style={textStyle(fontPx)}
-                    >
-                      {Array.from(NAME_LINES[0]).map((letter, index) => (
-                        <tspan key={index} ref={index === 2 ? mLetterRef : undefined} data-hero-letter={`0-${index}`}>{letter}</tspan>
-                      ))}
-                    </text>
-                    <text
-                      ref={textLine2Ref}
-                      x={
-                        typeof window !== "undefined"
-                          ? window.innerWidth / 2
-                          : 960
-                      }
-                      y={
-                        typeof window !== "undefined"
-                          ? window.innerHeight * 0.61
-                          : 659
-                      }
-                      fill="black"
-                      style={textStyle(fontPx)}
-                    >
-                      {Array.from(NAME_LINES[1]).map((letter, index) => (
-                        <tspan key={index} data-hero-letter={`1-${index}`}>{letter}</tspan>
-                      ))}
-                    </text>
-                  </>
+                  <text
+                    ref={textLine1Ref}
+                    x={typeof window !== "undefined" ? window.innerWidth / 2 : 960}
+                    y={typeof window !== "undefined" ? window.innerHeight * HERO_NAME_Y : 529}
+                    fill="black"
+                    style={textStyle(fontPx)}
+                  >
+                    {Array.from(HERO_NAME).map((letter, index) => (
+                      <tspan key={index} ref={index === 2 ? mLetterRef : undefined} data-hero-letter={`0-${index}`}>{letter}</tspan>
+                    ))}
+                  </text>
                 ) : null}
               </g>
             </mask>
@@ -667,32 +783,84 @@ export default function HeroSection({
             ref={maskLayerRef}
             x={0}
             y={0}
-            width={typeof window !== "undefined" ? window.innerWidth : 1920}
-            height={typeof window !== "undefined" ? window.innerHeight : 1080}
+            width={1920}
+            height={1080}
             fill="black"
             mask={`url(#${maskId})`}
             style={{ willChange: "opacity" }}
           />
           {fontsReady && fontPx > 0 ? (
-            <g ref={visibleTextGroupRef} aria-hidden="true" style={{ opacity: 0.78, willChange: "opacity" }}>
-              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: `url(#${glowId})` }}>
-                {Array.from(NAME_LINES[0]).map((letter, index) => (
+            <g ref={visibleTextGroupRef} aria-hidden="true" style={{ opacity: 0, willChange: "opacity" }}>
+              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" ? window.innerHeight * HERO_NAME_Y : 529} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>
+                {Array.from(HERO_NAME).map((letter, index) => (
                   <tspan key={index} data-hero-letter={`0-${index}`}>{letter}</tspan>
-                ))}
-              </text>
-              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: `url(#${glowId})` }}>
-                {Array.from(NAME_LINES[1]).map((letter, index) => (
-                  <tspan key={index} data-hero-letter={`1-${index}`}>{letter}</tspan>
                 ))}
               </text>
             </g>
           ) : null}
         </svg>
 
-        <div ref={heroIntroRef} className="absolute inset-x-4 bottom-[15%] z-[3] flex flex-col items-center gap-3 text-center sm:bottom-[11%]">
+        <div ref={productStageRef} className={styles.stage} style={{ opacity: 1 }}>
+          <div ref={productPositionRef} className={styles.wordPosition} style={{ pointerEvents: "none" }}>
+            <div
+              ref={productWordRef}
+              className={styles.word}
+              aria-label="AIMEN interactive letters"
+            >
+              {Array.from(HERO_NAME).map((letter, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  data-hero-product-letter={index}
+                  className={styles.letter}
+                  aria-label={`Animate letter ${letter}`}
+                  tabIndex={introComplete ? 0 : -1}
+                >
+                  <span className={styles.sizer} aria-hidden="true">{letter}</span>
+                  <span ref={(node) => { productRotatorsRef.current[index] = node; }} data-hero-letter={`0-${index}`} className={styles.rotator} aria-hidden="true">
+                    <span ref={(node) => { productFrontsRef.current[index] = node; }} className={`${styles.face} ${styles.front}`}>{letter}</span>
+                    <span className={`${styles.face} ${styles.back}`}>{letter}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <svg
+            ref={liquidSvgRef}
+            className={styles.liquid}
+            aria-hidden="true"
+            viewBox="0 0 1920 1080"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <clipPath id={liquidClipId} clipPathUnits="userSpaceOnUse">
+                {fontsReady && fontPx > 0 && (
+                  <text
+                    ref={liquidClipTextRef}
+                    x={typeof window !== "undefined" ? window.innerWidth / 2 : 960}
+                    y={typeof window !== "undefined" ? window.innerHeight * HERO_NAME_Y : 529}
+                    style={textStyle(fontPx)}
+                  >
+                    {HERO_NAME}
+                  </text>
+                )}
+              </clipPath>
+            </defs>
+            <g clipPath={`url(#${liquidClipId})`}>
+              <path
+                ref={liquidWaveRef}
+                d={buildWavePath(1920, 1080)}
+                fill="var(--accent)"
+              />
+            </g>
+          </svg>
+        </div>
+
+        <div ref={heroIntroRef} className="absolute inset-x-4 bottom-[15%] z-[3] flex flex-col items-center gap-3 text-center sm:bottom-[11%]" style={{ opacity: 0, pointerEvents: "none" }}>
           <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/75 sm:text-sm">3D Frontend Engineer · Creative Developer</p>
           <a
             href="#projects"
+            tabIndex={introComplete ? undefined : -1}
             onClick={(event) => {
               if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               event.preventDefault();
