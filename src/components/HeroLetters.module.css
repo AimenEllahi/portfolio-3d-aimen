@@ -4,7 +4,7 @@
   z-index: 2;
   background: #000;
   pointer-events: none;
-  transform: translateY(8px) scale(1.012);
+  transform: translateY(16px) scale(1.018);
   transform-origin: center;
 }
 
@@ -13,7 +13,7 @@
   position: absolute;
   left: 50%;
   top: calc(49% - var(--hero-name-size) * 0.076);
-  z-index: 1;
+  z-index: 3;
   transform: translate(-50%, -50%);
   pointer-events: auto;
 }
@@ -90,7 +90,6 @@
 
 .front {
   color: #edf5ef;
-  text-shadow: 0 2px 28px rgba(145, 237, 204, 0.14);
 }
 
 .back {

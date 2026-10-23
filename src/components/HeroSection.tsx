@@ -26,10 +26,10 @@ function smoothStep01(value: number) {
   return t * t * (3 - 2 * t);
 }
 
-function buildWavePath(width: number, height: number) {
+function buildWavePath(width: number, height: number, waveAmount = 1) {
   const start = -width;
   const end = width * 2;
-  const amplitude = Math.max(3, Math.min(9, width * 0.006));
+  const amplitude = Math.max(3, Math.min(9, width * 0.006)) * waveAmount;
   const wavelength = width * 0.48;
   const points = 72;
   let path = `M ${start} 0`;
@@ -94,6 +94,7 @@ export default function HeroSection({
   const rawId = useId().replace(/:/g, "");
   const maskId = `hero-name-mask-${rawId}`;
   const liquidClipId = `hero-liquid-clip-${rawId}`;
+  const liquidOutlineId = `hero-liquid-outline-${rawId}`;
 
   const sectionRef = useRef<HTMLElement>(null);
   const pinWrapRef = useRef<HTMLDivElement>(null);
@@ -106,6 +107,7 @@ export default function HeroSection({
   const productWordRef = useRef<HTMLDivElement>(null);
   const liquidSvgRef = useRef<SVGSVGElement>(null);
   const liquidClipTextRef = useRef<SVGTextElement>(null);
+  const liquidOutlineTextRef = useRef<SVGTextElement>(null);
   const liquidWaveRef = useRef<SVGPathElement>(null);
   const productRotatorsRef = useRef<Array<HTMLSpanElement | null>>([]);
   const productFrontsRef = useRef<Array<HTMLSpanElement | null>>([]);
@@ -128,7 +130,7 @@ export default function HeroSection({
   });
 
   const scrollTriggerRef = useRef<ScrollTrigger | null>(null);
-  const floatStrengthRef = useRef(1);
+  const waveAmountRef = useRef(1);
   const handoffRef = useRef(1);
   const idleLayerHiddenRef = useRef(false);
   const introCompleteRef = useRef(false);
@@ -137,6 +139,7 @@ export default function HeroSection({
   const [fontsReady, setFontsReady] = useState(false);
   const [fontPx, setFontPx] = useState(0);
   const [introComplete, setIntroComplete] = useState(false);
+  const introReady = fontsReady && fontPx > 0;
 
   const [maxScaleBoost, setMaxScaleBoost] = useState(45);
 
@@ -174,7 +177,7 @@ export default function HeroSection({
     svg.setAttribute("height", String(h));
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     if (liquidSvg) liquidSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    liquidWaveRef.current?.setAttribute("d", buildWavePath(w, h));
+    liquidWaveRef.current?.setAttribute("d", buildWavePath(w, h, waveAmountRef.current));
 
     maskEl.setAttribute("width", String(w));
     maskEl.setAttribute("height", String(h));
@@ -201,11 +204,16 @@ export default function HeroSection({
       liquidText.setAttribute("x", String(w / 2));
       liquidText.setAttribute("y", String(nameY));
     }
+    const outlineText = liquidOutlineTextRef.current;
+    if (outlineText) {
+      outlineText.setAttribute("x", String(w / 2));
+      outlineText.setAttribute("y", String(nameY));
+    }
 
     const word = productWordRef.current;
     if (word && fontPx > 0) {
       const width = word.offsetWidth;
-      for (const text of [t1, v1, liquidText]) {
+      for (const text of [t1, v1, liquidText, outlineText]) {
         if (!text) continue;
         text.setAttribute("textLength", String(width));
         text.setAttribute("lengthAdjust", "spacingAndGlyphs");
@@ -280,41 +288,6 @@ export default function HeroSection({
   }, []);
 
   useEffect(() => {
-    if (!fontsReady || !introComplete || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const tweens: gsap.core.Tween[] = [];
-    const context = gsap.context(() => {
-      Array.from(HERO_NAME).forEach((_, letterIndex) => {
-        const letters = section.querySelectorAll<Element>(
-          `[data-hero-letter="0-${letterIndex}"]`,
-        );
-        tweens.push(
-          gsap.to(letters, {
-            y: (letterIndex % 2 === 0 ? -1 : 1) * (2.5 + (letterIndex % 3) * 0.5),
-            duration: (2.8 + (letterIndex % 4) * 0.35) / 1.2,
-            ease: "sine.inOut",
-            repeat: -1,
-            yoyo: true,
-            modifiers: {
-              y: (value) => `${parseFloat(value) * floatStrengthRef.current}px`,
-            },
-          }),
-        );
-      });
-    }, section);
-    const observer = new IntersectionObserver(([entry]) => {
-      tweens.forEach((tween) => entry.isIntersecting ? tween.resume() : tween.pause());
-    });
-    observer.observe(section);
-    return () => {
-      observer.disconnect();
-      context.revert();
-    };
-  }, [fontsReady, introComplete]);
-
-  useEffect(() => {
     if (!fontsReady || !introComplete) return;
     const section = sectionRef.current;
     const word = productWordRef.current;
@@ -339,14 +312,15 @@ export default function HeroSection({
       gsap.set(rotators, { rotationY: 0, transformPerspective: 1000 });
       if (reducedMotion) return;
 
+      const flips = rotators.map((rotator) => gsap.to(rotator, {
+        rotationY: 180,
+        duration: 0.48,
+        ease: "power2.inOut",
+        paused: true,
+      }));
+      flipTweensRef.current = flips;
+
       if (desktop) {
-        const flips = rotators.map((rotator) => gsap.to(rotator, {
-          rotationY: 180,
-          duration: 0.62,
-          ease: "power2.inOut",
-          paused: true,
-        }));
-        flipTweensRef.current = flips;
         let hitMap: {
           x: number;
           y: number;
@@ -355,8 +329,16 @@ export default function HeroSection({
           pixels: Uint8ClampedArray;
         } | null = null;
         let activeIndex = -1;
+        let discoveryActive = false;
         let leaveTimer = 0;
         let resizeFrame = 0;
+
+        const interruptDiscovery = (nextIndex: number) => {
+          if (!discoveryActive || nextIndex < 0) return;
+          discoveryActive = false;
+          flips[0].eventCallback("onComplete", null);
+          if (nextIndex !== 0) flips[0].reverse();
+        };
 
         const buildHitMap = () => {
           const wordBounds = word.getBoundingClientRect();
@@ -404,6 +386,7 @@ export default function HeroSection({
         const onPointerMove = (event: PointerEvent) => {
           if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
           const nextIndex = isNameInteractive() ? hitLetterAt(event.clientX, event.clientY) : -1;
+          interruptDiscovery(nextIndex);
           if (nextIndex === activeIndex) {
             if (leaveTimer) window.clearTimeout(leaveTimer);
             leaveTimer = 0;
@@ -442,7 +425,9 @@ export default function HeroSection({
         window.addEventListener("resize", onResize, { passive: true });
         const removeListeners = buttons.map((button, index) => {
           const play = () => {
-            if (isNameInteractive()) flips[index].play();
+            if (!isNameInteractive()) return;
+            interruptDiscovery(index);
+            flips[index].play();
           };
           const reverse = () => flips[index].reverse();
           button.addEventListener("focus", play);
@@ -452,6 +437,14 @@ export default function HeroSection({
             button.removeEventListener("blur", reverse);
           };
         });
+        if ((scrollTriggerRef.current?.progress ?? 0) < 0.02) {
+          discoveryActive = true;
+          flips[0].eventCallback("onComplete", () => {
+            discoveryActive = false;
+            if (activeIndex !== 0) flips[0].reverse();
+          });
+          flips[0].play();
+        }
         return () => {
           window.removeEventListener("pointermove", onPointerMove);
           window.removeEventListener("resize", onResize);
@@ -471,14 +464,27 @@ export default function HeroSection({
           .to(rotators, { rotationY: 0, duration: 0.4, ease: "power3.out", stagger: 0.065 }, 0.28)
           .to(fronts, { color: "#edf5ef", y: 0, duration: 0.4, ease: "power3.out", stagger: 0.065 }, 0.28);
         touchWaveRef.current = wave;
+        let discoveryActive = false;
         const playWave = () => {
-          if (isNameInteractive()) wave.restart();
+          if (!isNameInteractive()) return;
+          if (discoveryActive) {
+            discoveryActive = false;
+            flips[0].eventCallback("onComplete", null);
+            flips[0].pause(0);
+          }
+          wave.restart();
         };
         word.addEventListener("click", playWave);
-        const introTimer = window.setTimeout(playWave, 900);
+        if ((scrollTriggerRef.current?.progress ?? 0) < 0.02) {
+          discoveryActive = true;
+          flips[0].eventCallback("onComplete", () => {
+            discoveryActive = false;
+            flips[0].reverse();
+          });
+          flips[0].play();
+        }
         return () => {
           word.removeEventListener("click", playWave);
-          window.clearTimeout(introTimer);
           touchWaveRef.current = null;
         };
       }
@@ -541,10 +547,6 @@ export default function HeroSection({
         idleLayerHiddenRef.current = false;
       }
 
-      // Keep the idle float intact at the start of the scroll, then ease it out
-      // before the enlarged letters make that movement noticeable.
-      const floatFade = gsap.utils.clamp(0, 1, (p - 0.08) / 0.24);
-      floatStrengthRef.current = 1 - floatFade * floatFade * (3 - 2 * floatFade);
       const { x: cx, y: cy } = scaleOriginRef.current;
       const scrollEase = gsap.parseEase("power4.in")(p);
       const scale = 1 + scrollEase * maxScaleBoost;
@@ -645,19 +647,21 @@ export default function HeroSection({
   }, [fontsReady, maxScaleBoost, syncProductStage, syncIntro]);
 
   useEffect(() => {
-    if (!fontsReady || fontPx <= 0 || introCompleteRef.current) return;
+    if (!introReady || introCompleteRef.current) return;
 
     const section = sectionRef.current;
     const stage = productStageRef.current;
     const liquid = liquidSvgRef.current;
     const wave = liquidWaveRef.current;
     const name = textLine1Ref.current;
+    const fronts = productFrontsRef.current.filter((node): node is HTMLSpanElement => Boolean(node));
     const chrome = document.querySelector<HTMLElement>("[data-hero-chrome]");
-    if (!section || !stage || !liquid || !wave || !name) return;
+    if (!section || !stage || !liquid || !wave || !name || fronts.length !== HERO_NAME.length) return;
 
     const finishIntro = () => {
       gsap.set(stage, { y: 0, scale: 1 });
       gsap.set(liquid, { opacity: 0 });
+      gsap.set(fronts, { color: "#edf5ef", filter: "none", opacity: 1 });
       if (chrome) gsap.set(chrome, { autoAlpha: 1 });
       section.style.zIndex = "20";
       introRevealRef.current = 1;
@@ -667,19 +671,27 @@ export default function HeroSection({
       setIntroComplete(true);
     };
 
-    const shouldSkip = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      || window.scrollY > 20
-      || (window.location.hash !== "" && window.location.hash !== "#home");
+    const hasDeepLink = window.location.hash !== "" && window.location.hash !== "#home";
+    const shouldSkip = window.matchMedia("(prefers-reduced-motion: reduce)").matches || hasDeepLink;
     if (shouldSkip) {
       finishIntro();
       return;
     }
 
+    if (window.scrollY > 0) {
+      window.scrollTo(0, 0);
+      lenisRef.current?.scrollTo(0, { immediate: true });
+      ScrollTrigger.update();
+    }
+
     const bounds = name.getBBox();
     const bottom = bounds.y + bounds.height + 12;
     const top = bounds.y - 12;
+    waveAmountRef.current = 1;
+    wave.setAttribute("d", buildWavePath(window.innerWidth, window.innerHeight));
     gsap.set(wave, { x: 0, y: bottom });
     gsap.set(liquid, { opacity: 1 });
+    gsap.set(fronts, { filter: "none", opacity: 0 });
 
     const waveDrift = gsap.to(wave, {
       x: -window.innerWidth * 0.48,
@@ -687,28 +699,40 @@ export default function HeroSection({
       ease: "none",
       repeat: -1,
     });
+    const waveState = { amount: 1 };
     const timeline = gsap.timeline({ onComplete: finishIntro });
     timeline
       .to(wave, { y: top, duration: 2, ease: "sine.inOut" })
-      .to(wave, { y: top - 3, duration: 0.2, ease: "sine.out" })
-      .to(liquid, { opacity: 0, duration: 0.28, ease: "power2.inOut" })
-      .to(stage, { y: 0, scale: 1, duration: 0.52, ease: "power2.inOut" }, "<")
-      .call(() => { section.style.zIndex = "20"; }, [], "<")
+      .call(() => { waveDrift.pause(); })
+      .to(waveState, {
+        amount: 0,
+        duration: 0.18,
+        ease: "sine.out",
+        onUpdate: () => {
+          waveAmountRef.current = waveState.amount;
+          wave.setAttribute("d", buildWavePath(window.innerWidth, window.innerHeight, waveState.amount));
+        },
+      })
+      .to(stage, { y: 0, scale: 1, duration: 0.5, ease: "power2.inOut" }, "+=0.08")
+      .addLabel("heroReveal", "-=0.22")
+      .to(liquid, { opacity: 0, duration: 0.42, ease: "power2.inOut" }, "heroReveal")
+      .to(fronts, { opacity: 1, duration: 0.42, ease: "power2.inOut" }, "heroReveal")
+      .call(() => { section.style.zIndex = "20"; }, [], "heroReveal")
       .to(introRevealRef, {
         current: 1,
         duration: 0.42,
         ease: "power2.out",
         onUpdate: syncIntro,
-      }, "<0.08");
+      }, "heroReveal+=0.08");
     if (chrome) {
-      timeline.to(chrome, { autoAlpha: 1, duration: 0.42, ease: "power2.out" }, "<");
+      timeline.to(chrome, { autoAlpha: 1, duration: 0.42, ease: "power2.out" }, "heroReveal+=0.08");
     }
 
     return () => {
       timeline.kill();
       waveDrift.kill();
     };
-  }, [fontsReady, fontPx, syncIntro, syncProductStage]);
+  }, [introReady, syncIntro, syncProductStage]);
 
   return (
     <section
@@ -818,7 +842,13 @@ export default function HeroSection({
                 >
                   <span className={styles.sizer} aria-hidden="true">{letter}</span>
                   <span ref={(node) => { productRotatorsRef.current[index] = node; }} data-hero-letter={`0-${index}`} className={styles.rotator} aria-hidden="true">
-                    <span ref={(node) => { productFrontsRef.current[index] = node; }} className={`${styles.face} ${styles.front}`}>{letter}</span>
+                    <span
+                      ref={(node) => { productFrontsRef.current[index] = node; }}
+                      className={`${styles.face} ${styles.front}`}
+                      style={{ filter: `url(#${liquidOutlineId})` }}
+                    >
+                      {letter}
+                    </span>
                     <span className={`${styles.face} ${styles.back}`}>{letter}</span>
                   </span>
                 </button>
@@ -833,6 +863,12 @@ export default function HeroSection({
             preserveAspectRatio="none"
           >
             <defs>
+              <filter id={liquidOutlineId} x="-10%" y="-10%" width="120%" height="120%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="4" result="expanded" />
+                <feComposite in="expanded" in2="SourceAlpha" operator="out" result="ring" />
+                <feFlood floodColor="#edf5ef" result="outlineColor" />
+                <feComposite in="outlineColor" in2="ring" operator="in" />
+              </filter>
               <clipPath id={liquidClipId} clipPathUnits="userSpaceOnUse">
                 {fontsReady && fontPx > 0 && (
                   <text
@@ -853,6 +889,17 @@ export default function HeroSection({
                 fill="var(--accent)"
               />
             </g>
+            {fontsReady && fontPx > 0 && (
+              <text
+                ref={liquidOutlineTextRef}
+                x={typeof window !== "undefined" ? window.innerWidth / 2 : 960}
+                y={typeof window !== "undefined" ? window.innerHeight * HERO_NAME_Y : 529}
+                style={{ ...textStyle(fontPx), fill: "#edf5ef" }}
+                filter={`url(#${liquidOutlineId})`}
+              >
+                {HERO_NAME}
+              </text>
+            )}
           </svg>
         </div>
 
