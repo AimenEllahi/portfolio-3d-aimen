@@ -911,9 +911,20 @@ export default function HeroSection({
             onClick={(event) => {
               if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               event.preventDefault();
+              const section = document.querySelector("#projects");
+              if (!section) return;
               history.pushState(null, "", "#projects");
-              if (lenisRef.current) lenisRef.current.scrollTo("#projects");
-              else document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" });
+              const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+              if (lenisRef.current) {
+                const distanceInViewports = Math.abs(section.getBoundingClientRect().top) / window.innerHeight;
+                lenisRef.current.scrollTo("#projects", {
+                  immediate: reduceMotion,
+                  duration: Math.min(2.4, Math.max(1.1, distanceInViewports * 0.75)),
+                  easing: (progress) => -(Math.cos(Math.PI * progress) - 1) / 2,
+                });
+              } else {
+                section.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth" });
+              }
             }}
             className="rounded-full border border-[var(--accent)]/65 bg-[var(--accent)]/10 px-5 py-2 text-sm font-medium text-[var(--accent)] transition-[background-color,border-color] hover:border-[var(--accent)] hover:bg-[var(--accent)]/20"
           >

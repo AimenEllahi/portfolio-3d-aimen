@@ -17,6 +17,9 @@ const NAV_LINKS = [
   { label: "Contact", target: "#contact" },
 ] as const;
 
+const easeInOutSine = (progress: number) =>
+  -(Math.cos(Math.PI * progress) - 1) / 2;
+
 export default function Navbar() {
   const lenis = useLenis();
   const pathname = usePathname();
@@ -86,10 +89,17 @@ export default function Navbar() {
       return;
     }
     history.pushState(null, "", target);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (lenis) {
-      lenis.scrollTo(target, { immediate: window.matchMedia("(prefers-reduced-motion: reduce)").matches });
+      const distanceInViewports = Math.abs(section.getBoundingClientRect().top) / window.innerHeight;
+      const duration = Math.min(2.4, Math.max(1.1, distanceInViewports * 0.75));
+      lenis.scrollTo(target, {
+        immediate: reduceMotion,
+        duration,
+        easing: easeInOutSine,
+      });
     } else {
-      section.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      section.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth" });
     }
     setIsMenuOpen(false);
   };
