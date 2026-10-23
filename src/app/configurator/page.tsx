@@ -250,7 +250,7 @@ export default function ConfiguratorPage() {
           <div
             ref={viewerRef}
             aria-busy={!sceneReady}
-            className="relative h-[52vh] min-h-[260px] max-h-[420px] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] sm:max-h-[520px] lg:col-span-2 lg:aspect-auto lg:h-[600px] lg:max-h-none lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
+            className="relative h-[52vh] min-h-[260px] max-h-[420px] w-full overflow-hidden border-b border-white/[0.06] bg-gradient-to-br from-[var(--surface)]/90 to-[var(--bg)]/90 opacity-0 sm:h-[55vh] sm:max-h-[520px] lg:sticky lg:top-24 lg:col-span-2 lg:aspect-auto lg:h-[min(600px,calc(100dvh-7.5rem))] lg:max-h-none lg:self-start lg:rounded-2xl lg:border lg:border-white/10 lg:backdrop-blur-sm"
           >
             <CarConfiguratorScene
               colors={partColors}
@@ -427,10 +427,10 @@ export default function ConfiguratorPage() {
             </div>
           </div>
 
-          {/* Desktop panel — UNCHANGED original markup */}
+          {/* Desktop controls scroll with the page while the car stays in view. */}
           <div
             ref={panelRef}
-            className="hidden lg:col-span-1 lg:block lg:h-[600px] lg:space-y-4 lg:overflow-y-auto lg:opacity-0"
+            className="hidden lg:col-span-1 lg:block lg:space-y-4 lg:opacity-0"
           >
             {/* Part Selection Panel */}
             <ConfigPanel

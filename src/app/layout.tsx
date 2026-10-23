@@ -52,9 +52,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark min-h-[100dvh] overflow-x-hidden ${neue.variable} ${monument.variable}`}
+      className={`dark min-h-[100dvh] overflow-x-clip ${neue.variable} ${monument.variable}`}
     >
-      <body className="min-h-[100dvh] overflow-x-hidden antialiased bg-[var(--bg)] text-[var(--fg)] font-neue">
+      <body className="min-h-[100dvh] overflow-x-clip antialiased bg-[var(--bg)] text-[var(--fg)] font-neue">
         <a href="#main-content" className="sr-only fixed left-4 top-4 z-[300] rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--bg)] focus:not-sr-only">Skip to Main Content</a>
         <SmoothScrollProvider>
           {children}

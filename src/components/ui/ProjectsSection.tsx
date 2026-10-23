@@ -402,7 +402,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
               >
                 <div
                   className={`pointer-events-none absolute left-0 right-0 top-0 z-20 h-0.5 origin-left scale-x-0 transition-transform duration-[400ms] ease-out group-hover/card:scale-x-100 ${
-                    project.tag === "Frontend"
+                    project.tag === "Interactive Web"
                       ? "bg-[var(--amber)]"
                       : "bg-[var(--accent)]"
                   }`}

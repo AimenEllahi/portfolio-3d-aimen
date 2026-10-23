@@ -12,6 +12,7 @@ import {
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useLenis } from "@/components/SmoothScrollProvider";
+import { heroPinDistanceVhForWidth } from "@/lib/heroMotion";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -47,13 +48,6 @@ function nudgeScaleOriginX(cx: number, viewportWidth: number) {
   return cx - shift;
 }
 
-/** Scroll distance (as vh) while hero remains pinned. */
-function heroPinDistanceVhForWidth(w: number): number {
-  if (w < 480) return 65;
-  if (w < 768) return 70;
-  return 75;
-}
-
 const textStyle = (fontSize: number): CSSProperties => ({
   fontFamily:
     "var(--font-monument), ui-sans-serif, system-ui, sans-serif",
@@ -63,6 +57,7 @@ const textStyle = (fontSize: number): CSSProperties => ({
   fill: "#000000",
   textAnchor: "middle",
   dominantBaseline: "middle",
+  textRendering: "geometricPrecision",
 });
 
 export type HeroSectionProps = {
@@ -77,6 +72,7 @@ export default function HeroSection({
 }: HeroSectionProps) {
   const rawId = useId().replace(/:/g, "");
   const maskId = `hero-name-mask-${rawId}`;
+  const glowId = `hero-name-glow-${rawId}`;
 
   const sectionRef = useRef<HTMLElement>(null);
   const pinWrapRef = useRef<HTMLDivElement>(null);
@@ -85,6 +81,7 @@ export default function HeroSection({
   const textGroupRef = useRef<SVGGElement>(null);
   const visibleTextGroupRef = useRef<SVGGElement>(null);
   const heroIntroRef = useRef<HTMLDivElement>(null);
+  const nameGradientRef = useRef<SVGRadialGradientElement>(null);
   const measureLine1Ref = useRef<SVGTextElement>(null);
   const measureLine2Ref = useRef<SVGTextElement>(null);
   const svgMaskRootRef = useRef<SVGSVGElement>(null);
@@ -112,7 +109,6 @@ export default function HeroSection({
   const [nameRevealed, setNameRevealed] = useState(false);
 
   const [maxScaleBoost, setMaxScaleBoost] = useState(45);
-  const [heroPinDistanceVh, setHeroPinDistanceVh] = useState(125);
 
   const lenis = useLenis();
   const lenisRef = useRef(lenis);
@@ -128,14 +124,6 @@ export default function HeroSection({
     syncBoost();
     mq.addEventListener("change", syncBoost);
     return () => mq.removeEventListener("change", syncBoost);
-  }, []);
-
-  useEffect(() => {
-    const syncPinDistance = () =>
-      setHeroPinDistanceVh(heroPinDistanceVhForWidth(window.innerWidth));
-    syncPinDistance();
-    window.addEventListener("resize", syncPinDistance, { passive: true });
-    return () => window.removeEventListener("resize", syncPinDistance);
   }, []);
 
   const syncSvgMaskGeometry = useCallback(() => {
@@ -282,7 +270,6 @@ export default function HeroSection({
           tweens.push(gsap.to(letters, {
             y: (letterIndex % 2 === 0 ? -1 : 1) * (2.5 + (letterIndex % 3) * 0.5),
             duration: 2.8 + (letterIndex % 4) * 0.35 + lineIndex * 0.2,
-            delay: letterIndex * 0.17 + lineIndex * 0.24,
             ease: "sine.inOut",
             repeat: -1,
             yoyo: true,
@@ -302,6 +289,76 @@ export default function HeroSection({
       context.revert();
     };
   }, [fontsReady]);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const gradient = nameGradientRef.current;
+    if (!section || !gradient) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
+
+    let frame = 0;
+    let lastFrame = 0;
+    let lastPointerMove = -Infinity;
+    let inView = false;
+    let x = window.innerWidth * 0.5;
+    let y = window.innerHeight * 0.46;
+    let targetX = x;
+    let targetY = y;
+
+    const syncRadius = () => {
+      gradient.setAttribute("r", String(Math.max(window.innerWidth * 0.55, window.innerHeight * 0.7)));
+    };
+    syncRadius();
+
+    const tick = (now: number) => {
+      if (now - lastFrame >= 32) {
+        if (now - lastPointerMove > 2200) {
+          targetX = window.innerWidth * (0.5 + 0.28 * Math.sin(now * 0.00042));
+          targetY = window.innerHeight * (0.46 + 0.16 * Math.sin(now * 0.00061 + 1));
+        }
+        x += (targetX - x) * 0.1;
+        y += (targetY - y) * 0.1;
+        gradient.setAttribute("cx", x.toFixed(1));
+        gradient.setAttribute("cy", y.toFixed(1));
+        lastFrame = now;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+
+    const syncFrame = () => {
+      const shouldRun = inView && !document.hidden && window.scrollY < 4;
+      if (shouldRun && !frame) frame = requestAnimationFrame(tick);
+      if (!shouldRun && frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      syncFrame();
+    });
+    const onPointerMove = (event: PointerEvent) => {
+      if (!inView || event.pointerType === "touch") return;
+      targetX = event.clientX;
+      targetY = event.clientY;
+      lastPointerMove = performance.now();
+    };
+    observer.observe(section);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("scroll", syncFrame, { passive: true });
+    window.addEventListener("resize", syncRadius, { passive: true });
+    document.addEventListener("visibilitychange", syncFrame);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("scroll", syncFrame);
+      window.removeEventListener("resize", syncRadius);
+      document.removeEventListener("visibilitychange", syncFrame);
+    };
+  }, []);
 
   useEffect(() => {
     if (!fontsReady || fontPx <= 0) return;
@@ -342,7 +399,9 @@ export default function HeroSection({
     if (!section || !pinWrap || !textG || !maskLayer) return;
 
     const applyFrame = (p: number) => {
-      const floatFade = gsap.utils.clamp(0, 1, p / 0.15);
+      // Keep the idle float intact at the start of the scroll, then ease it out
+      // before the enlarged letters make that movement noticeable.
+      const floatFade = gsap.utils.clamp(0, 1, (p - 0.08) / 0.24);
       floatStrengthRef.current = 1 - floatFade * floatFade * (3 - 2 * floatFade);
       const { x: cx, y: cy } = scaleOriginRef.current;
       const scrollEase = gsap.parseEase("power4.in")(p);
@@ -415,9 +474,9 @@ export default function HeroSection({
     scrollTriggerRef.current = ScrollTrigger.create({
       trigger: section,
       start: "top top",
-      end: () => `+=${window.innerHeight * (heroPinDistanceVh / 100)}`,
+      end: () => `+=${window.innerHeight * (heroPinDistanceVhForWidth(window.innerWidth) / 100)}`,
       pin: pinWrap,
-      pinSpacing: true,
+      pinSpacing: false,
       anticipatePin: 1,
       scrub: 0.4,
       onUpdate: (self) => applyFrame(self.progress),
@@ -441,13 +500,13 @@ export default function HeroSection({
       scrollTriggerRef.current?.kill();
       scrollTriggerRef.current = null;
     };
-  }, [fontsReady, heroPinDistanceVh, maxScaleBoost]);
+  }, [fontsReady, maxScaleBoost]);
 
   return (
     <section
       ref={sectionRef}
       id={sectionId}
-      className="relative w-full bg-transparent"
+      className="relative z-20 w-full bg-transparent"
       style={{ minHeight: "100dvh" }}
     >
       <h1 className="sr-only">Aimen Qaiser — 3D Frontend Engineer</h1>
@@ -520,6 +579,18 @@ export default function HeroSection({
           preserveAspectRatio="none"
         >
           <defs>
+            <radialGradient
+              ref={nameGradientRef}
+              id={glowId}
+              gradientUnits="userSpaceOnUse"
+              cx={typeof window !== "undefined" ? window.innerWidth * 0.5 : 960}
+              cy={typeof window !== "undefined" ? window.innerHeight * 0.46 : 497}
+              r={typeof window !== "undefined" ? Math.max(window.innerWidth * 0.55, window.innerHeight * 0.7) : 1056}
+            >
+              <stop offset="0%" stopColor="#f3fff8" />
+              <stop offset="38%" stopColor="#b4f9e0" />
+              <stop offset="100%" stopColor="#80ab9d" />
+            </radialGradient>
             <mask
               ref={maskElementRef}
               id={maskId}
@@ -604,12 +675,12 @@ export default function HeroSection({
           />
           {fontsReady && fontPx > 0 ? (
             <g ref={visibleTextGroupRef} aria-hidden="true" style={{ opacity: 0.78, willChange: "opacity" }}>
-              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>
+              <text ref={visibleLine1Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.43 : typeof window !== "undefined" ? window.innerHeight * 0.31 : 335} style={{ ...textStyle(fontPx), fill: `url(#${glowId})` }}>
                 {Array.from(NAME_LINES[0]).map((letter, index) => (
                   <tspan key={index} data-hero-letter={`0-${index}`}>{letter}</tspan>
                 ))}
               </text>
-              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: "#d1f9ec" }}>
+              <text ref={visibleLine2Ref} x={typeof window !== "undefined" ? window.innerWidth / 2 : 960} y={typeof window !== "undefined" && window.innerWidth < 640 ? window.innerHeight * 0.57 : typeof window !== "undefined" ? window.innerHeight * 0.61 : 659} style={{ ...textStyle(fontPx), fill: `url(#${glowId})` }}>
                 {Array.from(NAME_LINES[1]).map((letter, index) => (
                   <tspan key={index} data-hero-letter={`1-${index}`}>{letter}</tspan>
                 ))}

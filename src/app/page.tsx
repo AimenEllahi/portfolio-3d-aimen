@@ -52,13 +52,13 @@ const PROJECTS_DATA: ProjectCard[] = [
     href: "https://graphics-producer-sticker-configurator.vercel.app/",
   },
   {
-    name: "TaskBoard Pro",
-    tech: ["Angular", "Tailwind"],
-    description: "Sprint dashboards, filters, and responsive task grids.",
-    tag: "Frontend",
+    name: "Tashkeel Atelier",
+    tech: ["Next.js", "React", "Interactive UX"],
+    description: "Wedding atelier site with interactive mood boards, garden styling, and an inquiry flow.",
+    tag: "Interactive Web",
     tagClass:
       "border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.1)] text-[var(--amber)]",
-    href: "https://angular-project-ashy.vercel.app/dashboard",
+    href: "https://tashkeel-oro8.vercel.app/",
   },
   {
     name: "UdS EduTech Research Platform",

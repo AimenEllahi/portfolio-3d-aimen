@@ -5,6 +5,7 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { heroPinDistanceVhForWidth } from "@/lib/heroMotion";
 
 /** Matches HeroSection scrub timing so zoom lines up with the name/M stencil zoom */
 const HERO_TRIGGER_SELECTOR = "#home";
@@ -42,7 +43,7 @@ export default function CameraRig() {
       heroTrigger = ScrollTrigger.create({
         trigger: el,
         start: "top top",
-        end: "bottom bottom",
+        end: () => `+=${window.innerHeight * (heroPinDistanceVhForWidth(window.innerWidth) / 100)}`,
         scrub: 0.4,
         onUpdate: (self) => {
           heroProgress = self.progress;
@@ -54,8 +55,8 @@ export default function CameraRig() {
       if (projects) {
         projectsTrigger = ScrollTrigger.create({
           trigger: projects,
-          start: "top bottom",
-          end: "top 60%",
+          start: () => window.innerWidth < 768 ? "top 50%" : "top 40%",
+          end: "top 5%",
           scrub: 0.4,
           onUpdate: (self) => {
             projectsProgress = self.progress;

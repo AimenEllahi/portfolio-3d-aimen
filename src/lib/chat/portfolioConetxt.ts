@@ -20,6 +20,7 @@ LinkedIn: https://www.linkedin.com/in/aimen-qaiser-24798321a/
 - Xiaomi 3D Showcase (https://o16u.vercel.app): Three.js product viewer, GSAP.
 - Landau Boat Configurator (https://landau-alure-232.vercel.app/Island): Real-time 3D configurator.
 - Sticker Configurator (https://graphics-producer-sticker-configurator.vercel.app/): Next.js, Canvas, Firebase, WooCommerce.
+- Tashkeel Atelier (https://tashkeel-oro8.vercel.app/): Interactive wedding atelier site with mood boards, garden styling, and an inquiry flow. Next.js and React.
 - UdS EduTech Research Platform (https://edutech.uni-saarland.de/): Web platform built as a Research Assistant for the EduTech group at Saarland University. Next.js, React, Tailwind.
 - This portfolio: Next.js, TypeScript, R3F, GSAP, GLSL, car configurator demo.
 
